@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>The Tkinter Cookbook</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+    <h1 class="entry-title">The Tkinter Cookbook</h1>
+    
+    <p>This post will help with small, basic questions you may have about how to do a specific thing in tkinter with python.</p>
+<p>If you want an in-depth breakdown of creating useful apps with tkinter check out my free book - Tkinter by Example:</p>
+<p><a class="reference external" href="http://www.python.org/">Get Tkinter By Example on Github</a></p>
+<div class="section" id="creating-a-window">
+<h2>Creating a window</h2>
+<p>To show a window, create a <tt class="docutils literal">Tk()</tt> object and call its <tt class="docutils literal">mainloop</tt> method.</p>
+<p><tt class="docutils literal">mainloop</tt> is blocking, so almost always will be the last line in your code.</p>
+<div class="highlight"><pre><span></span><span class="n">win</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Tk</span><span class="p">()</span>
+<span class="c1"># Create widgets here</span>
+<span class="n">win</span><span class="o">.</span><span class="n">mainloop</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="creating-a-widget-inside-a-window">
+<h2>Creating a widget inside a window</h2>
+<p>To add a widget into a window, simply instantiate the widget and pass the window as the first argument. Note that the <tt class="docutils literal">Widget</tt> class in this example is not real. See following examples for actual widgets.</p>
+<div class="highlight"><pre><span></span><span class="n">w</span> <span class="o">=</span> <span class="n">Widget</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">keyword</span><span class="o">=</span><span class="s2">&quot;argument&quot;</span><span class="p">)</span>
+</pre></div>
+<p>This first argument is often referred to as the &quot;master&quot; or &quot;parent&quot;.</p>
+</div>
+<div class="section" id="displaying-a-widget">
+<h2>Displaying a widget</h2>
+<p>To display a widget inside its master, you need to assign it some space using a geometry manager.</p>
+<p>There are three geometry managers to choose from: <tt class="docutils literal">pack</tt>, <tt class="docutils literal">grid</tt> and <tt class="docutils literal">place</tt>. <tt class="docutils literal">Place</tt> is rarely used, <tt class="docutils literal">pack</tt> vs <tt class="docutils literal">grid</tt> is personal preference.
+Pack</p>
+<p>Common arguments to pack include <tt class="docutils literal">side</tt>, <tt class="docutils literal">fill</tt> and <tt class="docutils literal">expand</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">w</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">LEFT</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+<p><tt class="docutils literal">side</tt> determines which side of the remaining space you wish to allocate your widget to, options include <tt class="docutils literal">tk.LEFT</tt>, <tt class="docutils literal">tk.RIGHT</tt>, <tt class="docutils literal">tk.TOP</tt> and <tt class="docutils literal">tk.BOTTOM</tt>.</p>
+<p><tt class="docutils literal">fill</tt> determines which way to &quot;stretch&quot; out your widget. <tt class="docutils literal">tk.X</tt> will stretch it horizontally and <tt class="docutils literal">tk.Y</tt> vertically.</p>
+<p><tt class="docutils literal">expand</tt> tells the geometry manager whether you want the widget to change size with the window. Options are <tt class="docutils literal">True</tt> or <tt class="docutils literal">False</tt> (or 1 and 0).</p>
+</div>
+<div class="section" id="grid">
+<h2>Grid</h2>
+<p>Common arguments to grid include <tt class="docutils literal">row</tt>, <tt class="docutils literal">column</tt>, <tt class="docutils literal">rowspan</tt>, <tt class="docutils literal">columnspan</tt> and <tt class="docutils literal">sticky</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">w</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">column</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">rowspan</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">columnspan</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">sticky</span><span class="o">=</span><span class="s2">&quot;nsew&quot;</span><span class="p">)</span>
+</pre></div>
+<p><tt class="docutils literal">row</tt> and <tt class="docutils literal">column</tt> define which cell to place the widget into``.</p>
+<p><tt class="docutils literal">rowspan</tt> and <tt class="docutils literal">columnspan</tt> determine how many rows or columns the widget should occupy.</p>
+<p><tt class="docutils literal">sticky</tt> allows you to choose which sides of the cell the widget should stick to. It defaults to none, so the widget stays in the center of its cell. Arguments are variations of n,s,e,w (north, south, east, west) eg &quot;ew&quot; will stick horizontally and &quot;ns&quot; vertically.</p>
+</div>
+<div class="section" id="place">
+<h2>Place</h2>
+<p>Common arguments to place are <tt class="docutils literal">x</tt>, <tt class="docutils literal">y</tt>, <tt class="docutils literal">relx</tt> and <tt class="docutils literal">rely</tt></p>
+<div class="highlight"><pre><span></span><span class="n">w</span><span class="o">.</span><span class="n">place</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">w</span><span class="o">.</span><span class="n">place</span><span class="p">(</span><span class="n">relx</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">rely</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+<p><tt class="docutils literal">x</tt> and <tt class="docutils literal">y</tt> are the coordinates you wish to place the widget at.</p>
+<p><tt class="docutils literal">relx</tt> and <tt class="docutils literal">rely</tt> are relative coordinates to the master. 0.5 for both would be the center, as in the example above.
+Choosing a widget</p>
+<p>The widget you need depends on what you are trying to add to your window. Here are all of the widgets:</p>
+</div>
+<div class="section" id="i-want-to">
+<h2>I want to</h2>
+<div class="section" id="show-some-text">
+<h3>Show some text</h3>
+<p>In order to show text, create a <tt class="docutils literal">Label</tt> widget and pass in the text to display as the &quot;text&quot; argument.</p>
+<div class="highlight"><pre><span></span><span class="n">label</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="collect-user-input-text">
+<h3>Collect user input (text)</h3>
+<p>To allow the user to enter text, you can use either an <tt class="docutils literal">Entry</tt> or a <tt class="docutils literal">Text</tt> widget. An <tt class="docutils literal">Entry</tt> will collect a single line of text, whereas a <tt class="docutils literal">Text</tt> can collect multiple lines.</p>
+<div class="highlight"><pre><span></span><span class="n">entry</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Entry</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="collect-user-input-number">
+<h3>Collect user input (number)</h3>
+<p>To collect a number from the user, use a <tt class="docutils literal">Spinbox</tt> widget. This widget also has arrows to allow the user to increment or decrement the number by clicking.</p>
+<div class="highlight"><pre><span></span><span class="n">spinbox</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Spinbox</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="add-a-button">
+<h3>Add a button</h3>
+<p>To add a button, use a <tt class="docutils literal">Button</tt> widget. The text on the button is set with the &quot;text&quot; argument, and the function to run when the button is pressed is passed via the &quot;command&quot; argument.</p>
+<p>Do not put the parentheses after the function passed to &quot;command&quot; as this will call the function and bind the result instead of binding the function itself.</p>
+<div class="highlight"><pre><span></span><span class="n">submit_button</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;submit&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">submit_answer</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="add-a-checkbox">
+<h3>Add a checkbox</h3>
+<p>A checkbox can be created using the <tt class="docutils literal">Checkbutton</tt> widget.</p>
+<p>The text displayed by the <tt class="docutils literal">Checkbutton</tt> can be passed with the &quot;text&quot; argument.</p>
+<div class="highlight"><pre><span></span><span class="n">show_line_numbers</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Checkbutton</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;Show line numbers?&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="letting-the-user-make-a-choice">
+<h2>Letting the user make a choice</h2>
+<div class="section" id="add-radio-buttons">
+<h3>Add radio buttons</h3>
+<p>A radiobutton can be created using the <tt class="docutils literal">Radiobutton</tt> widget. The chosen value is stored in a tkinter variable (see tkinter variables)</p>
+<p><tt class="docutils literal">Radiobuttons</tt> are very similar to <tt class="docutils literal">Checkbuttons</tt> in terms of arguments.</p>
+<div class="highlight"><pre><span></span><span class="n">choice</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">IntVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">one_box</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Radiobutton</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;one box&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">choice</span><span class="p">)</span>
+<span class="n">two_boxes</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Radiobutton</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;two boxes&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">choice</span><span class="p">)</span>
+<span class="n">three_boxes</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Radiobutton</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;three boxes&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">choice</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="add-a-list-box">
+<h3>Add a list box</h3>
+<p>A <tt class="docutils literal">Listbox</tt> widget is sort of like an expanded dropdown. The user can select one or more choices depending on configuration</p>
+<div class="highlight"><pre><span></span><span class="n">choices</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;small&quot;</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span> <span class="s2">&quot;large&quot;</span><span class="p">)</span>
+<span class="n">choice_display</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Listbox</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">selectmode</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">SINGLE</span><span class="p">)</span>
+<span class="n">choices</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">tk</span><span class="o">.</span><span class="n">END</span><span class="p">,</span> <span class="o">*</span><span class="n">choices</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="add-a-dropdown-menu">
+<h3>Add a dropdown menu</h3>
+<p>The <tt class="docutils literal">OptionMenu</tt> widget functions like a dropdown box.</p>
+<p>Unlike a <tt class="docutils literal">Listbox</tt> you can only select one item at a time</p>
+<p>The <tt class="docutils literal">OptionMenu</tt> widget requires a tkinter variable (see tkinter variables)</p>
+<div class="highlight"><pre><span></span><span class="n">choices</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;small&quot;</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span> <span class="s2">&quot;large&quot;</span><span class="p">)</span>
+<span class="n">var</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">choice_display</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">OptionMenu</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="o">*</span><span class="n">choices</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="group-some-widgets">
+<h2>Group some widgets</h2>
+<p>To group widgets, create a <tt class="docutils literal">Frame</tt> widget and use it as the widgets' master. This allows for greater control with the <tt class="docutils literal">pack</tt> geometry manager and allows you to set the background colour of certain sections of your application (with the <tt class="docutils literal">bg</tt> argument).</p>
+<div class="highlight"><pre><span></span><span class="n">left_frame</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">)</span>
+<span class="n">button</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">left_frame</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">say_hello</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="using-variables-in-widgets">
+<h2>Using variables in widgets</h2>
+<div class="section" id="types-of-tkinter-variables">
+<h3>Types of tkinter variables</h3>
+<p>There are four variables in tkinter - <tt class="docutils literal">BooleanVar</tt>, <tt class="docutils literal">DoubleVar</tt>, <tt class="docutils literal">IntVar</tt> and <tt class="docutils literal">StringVar</tt>. Create one like so:</p>
+<div class="highlight"><pre><span></span><span class="n">bv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">BooleanVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">dv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">DoubleVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">iv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">IntVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">sv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="setting-the-value-manually">
+<h3>Setting the value manually</h3>
+<p>set the value using the <tt class="docutils literal">set</tt> method.</p>
+<div class="highlight"><pre><span></span><span class="n">sv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">sv</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="getting-the-value">
+<h3>Getting the value</h3>
+<p>get the value using the <tt class="docutils literal">get</tt> method.</p>
+<div class="highlight"><pre><span></span><span class="n">hello_text</span> <span class="o">=</span> <span class="n">sv</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="attaching-variables-to-widgets">
+<h2>Attaching variables to widgets</h2>
+<div class="section" id="i-want-to-use-a-variable-with-a">
+<h3>I want to use a variable with a</h3>
+</div>
+<div class="section" id="label">
+<h3>Label</h3>
+<p>You can attach a <tt class="docutils literal">StringVar</tt> to a Label using the <tt class="docutils literal">textvar</tt> argument.</p>
+<p>Attaching a <tt class="docutils literal">StringVar</tt> to a <tt class="docutils literal">Label</tt> allows you to dynamically update the text displayed by the <tt class="docutils literal">Label</tt> each time you call <tt class="docutils literal">set()</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">sv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">sv</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+<span class="n">label</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">textvar</span><span class="o">=</span><span class="n">sv</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="entry">
+<h3>Entry</h3>
+<p>You can attach a <tt class="docutils literal">StringVar</tt> to an <tt class="docutils literal">Entry</tt> using the <tt class="docutils literal">textvar</tt> argument.</p>
+<p>The value of the <tt class="docutils literal">StringVar</tt> will update when the user types into the <tt class="docutils literal">Entry</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">sv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">sv</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;hello&quot;</span><span class="p">)</span>
+<span class="n">entry</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Entry</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">textvar</span><span class="o">=</span><span class="n">sv</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="checkbutton">
+<h3>Checkbutton</h3>
+<p>You can attach a variable to a <tt class="docutils literal">Checkbutton</tt> using the <tt class="docutils literal">variable</tt> argument.</p>
+<p>The value of the variable defaults to 1 when checked and 0 when not. You can change this by passing the <tt class="docutils literal">onvalue</tt> and <tt class="docutils literal">offvalue</tt> arguments.</p>
+<div class="highlight"><pre><span></span><span class="n">iv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">IntVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">chk</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Checkbox</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;display line numbers&quot;</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">iv</span><span class="p">)</span>
+
+<span class="c1">##########</span>
+
+<span class="n">sv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">StringVar</span><span class="p">()</span>
+<span class="n">sv</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;no&quot;</span><span class="p">)</span>
+<span class="n">chk</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Checkbox</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;go north?&quot;</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">sv</span><span class="p">,</span> <span class="n">onvalue</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="n">offvalue</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="spinbox">
+<h3>Spinbox</h3>
+<p>You can attach a variable to a <tt class="docutils literal">Spinbox</tt> using the <tt class="docutils literal">textvar</tt> argument.</p>
+<p>This is the way to set a default value to a <tt class="docutils literal">Spinbox</tt> too.</p>
+<div class="highlight"><pre><span></span><span class="n">iv</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">IntVar</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">iv</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">spin</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Spinbox</span><span class="p">(</span><span class="n">master</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;display line numbers&quot;</span><span class="p">,</span> <span class="n">textvar</span><span class="o">=</span><span class="n">iv</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="radiobutton-and-optionmenu">
+<h3>Radiobutton and OptionMenu</h3>
+<p>See radio buttons and dropdown menu widget recipes.</p>
+</div>
+</div>
+<div class="section" id="changing-window-attributes">
+<h2>Changing Window Attributes</h2>
+<div class="section" id="changing-the-window-s-titlebar-text">
+<h3>Changing the window's titlebar text</h3>
+<p>To change the text in the titlebar of your application, use the <tt class="docutils literal">title</tt> method.</p>
+<div class="highlight"><pre><span></span><span class="n">window</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;My Text Editor&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="changing-the-window-s-size">
+<h3>Changing the window's size</h3>
+<p>To change the size, use the <tt class="docutils literal">geometry</tt> method. Pass in a string formatted as &quot;widthxheight&quot;. You don't need to use the <tt class="docutils literal">format</tt> method here, but it could increase readability.</p>
+<div class="highlight"><pre><span></span><span class="n">width</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">height</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">geometry_string</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">x</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+<span class="n">window</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="n">geometry_string</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="changing-the-window-s-position">
+<h3>Changing the window's position</h3>
+<p>To change the position, use the <tt class="docutils literal">geometry</tt> method once again. Pass in a string formatted as &quot;widthxheight+x+y&quot;.</p>
+<div class="highlight"><pre><span></span><span class="n">width</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">height</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">x_pos</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="n">y_pos</span> <span class="o">=</span> <span class="mi">400</span>
+<span class="n">geometry_string</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">x</span><span class="si">{}</span><span class="s2">+</span><span class="si">{}</span><span class="s2">+</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">x_pos</span><span class="p">,</span> <span class="n">y_pos</span><span class="p">)</span>
+<span class="n">window</span><span class="o">.</span><span class="n">geometry</span><span class="p">(</span><span class="n">geometry_string</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="prevent-resizing">
+<h3>Prevent Resizing</h3>
+<p>You can allow or prevent resizing with <tt class="docutils literal">resizable</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">window</span><span class="o">.</span><span class="n">resizable</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>  <span class="c1"># Not resizable</span>
+<span class="n">window</span><span class="o">.</span><span class="n">resizable</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>   <span class="c1"># cannot resize in Y direction</span>
+<span class="n">window</span><span class="o">.</span><span class="n">resizable</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>   <span class="c1"># cannot resize in X direction</span>
+</pre></div>
+</div>
+<div class="section" id="minimum-and-maximum-size">
+<h3>Minimum and maximum size</h3>
+<p>You can force a minumum and maximum size with <tt class="docutils literal">minsize</tt> and <tt class="docutils literal">maxsize</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">window</span><span class="o">.</span><span class="n">minsize</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+<span class="n">window</span><span class="o">.</span><span class="n">maxsize</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-a-top-menu">
+<h2>Adding a Top Menu</h2>
+<div class="section" id="creating-the-menu-bar">
+<h3>Creating the Menu Bar</h3>
+<p>To add a menu bar to your application, first you need to create a <tt class="docutils literal">Menu</tt> widget. You then assign this to your window's menu attribute. This will add a blank menu bar to the top of your window.</p>
+<div class="highlight"><pre><span></span><span class="n">menubar</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Menu</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+<span class="n">window</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">menu</span><span class="o">=</span><span class="n">menubar</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="adding-menu-buttons">
+<h3>Adding Menu Buttons</h3>
+<p>In order to add single menu items, use <tt class="docutils literal">add_command</tt>. The text displayed on the item is passed in via the <tt class="docutils literal">label</tt> argument, and the function to run by the <tt class="docutils literal">command</tt> argument.</p>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">say_hi</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;hi&quot;</span><span class="p">)</span>
+
+<span class="n">menubar</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;greet me&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">say_hi</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="adding-sub-menus">
+<h3>Adding Sub-Menus</h3>
+<p>To add a sub-menu (like the &quot;file&quot; or &quot;edit&quot; menus you may be used to) create another instance of a <tt class="docutils literal">Menu</tt> widget and pass it to the <tt class="docutils literal">add_cascade</tt> method of your main menu bar. The <tt class="docutils literal">label</tt> argument will be the text displayed, and the <tt class="docutils literal">menu</tt> argument will be the sub-menu to add. By default, the sub-menu can be pulled off of the main menu bar. To prevent this, use <tt class="docutils literal">tearoff=0</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">file_menu</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Menu</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="n">tearoff</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">file_menu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;open&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="nb">open</span><span class="p">)</span>
+<span class="n">file_menu</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;save&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">save</span><span class="p">)</span>
+
+<span class="n">menubar</span><span class="o">.</span><span class="n">add_cascade</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;File&quot;</span><span class="p">,</span> <span class="n">menu</span><span class="o">=</span><span class="n">file_menu</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="adding-a-checkbutton-or-radiobutton-in-a-menu">
+<h3>Adding a Checkbutton or Radiobutton in a Menu</h3>
+<p>You can add <tt class="docutils literal">Checkbutton</tt> and <tt class="docutils literal">Radiobutton</tt> widgets into menus with <tt class="docutils literal">add_checkbutton</tt> and <tt class="docutils literal">add_radiobutton</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">show_line_nums</span> <span class="o">=</span> <span class="n">IntVar</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+<span class="n">file_menu</span><span class="o">.</span><span class="n">add_checkbutton</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Show Line Numbers&quot;</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">show_line_nums</span><span class="p">)</span>
+
+<span class="c1">#####</span>
+
+<span class="n">text_colour</span> <span class="o">=</span> <span class="n">StringVar</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+<span class="n">text_colour</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+<span class="n">file_menu</span><span class="o">.</span><span class="n">add_radiobutton</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;black text&quot;</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">text_colour</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+<span class="n">file_menu</span><span class="o">.</span><span class="n">add_radiobutton</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;white text&quot;</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">text_colour</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)</span>
+<span class="n">file_menu</span><span class="o">.</span><span class="n">add_radiobutton</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;grey text&quot;</span><span class="p">,</span> <span class="n">variable</span><span class="o">=</span><span class="n">text_colour</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">&quot;grey&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="adding-a-separator">
+<h3>Adding a Separator</h3>
+<p>You can add a space between menu items with <tt class="docutils literal">add_separator()</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">file_menu</span><span class="o">.</span><span class="n">add_separator</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dynamic-content">
+<h2>Dynamic Content</h2>
+<div class="section" id="swapping-the-contents-of-a-window">
+<h3>Swapping the contents of a window</h3>
+<p>To easily swap the contents of a window, for example if emulating a paged interface, create each &quot;page&quot; inside a separate <tt class="docutils literal">Frame</tt>. Then, use <tt class="docutils literal">frame.pack_forget()</tt> or <tt class="docutils literal">frame.grid_forget()</tt> (depending on your choice of geometry manager) to un-display the first frame. Follow up by using <tt class="docutils literal">pack</tt> or <tt class="docutils literal">grid</tt> to display the next.</p>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">show_page_two</span><span class="p">():</span>
+    <span class="n">page_one</span><span class="o">.</span><span class="n">pack_forget</span><span class="p">()</span>
+    <span class="n">page_two</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">show_page_one</span><span class="p">():</span>
+    <span class="n">page_two</span><span class="o">.</span><span class="n">pack_forget</span><span class="p">()</span>
+    <span class="n">page_one</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+
+<span class="n">page_one</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">button_one</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">page_one</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;page two&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">show_page_two</span><span class="p">)</span>
+<span class="n">label_one</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">page_one</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;on page one&quot;</span><span class="p">)</span>
+<span class="n">label_one</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+<span class="n">button_one</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+<span class="n">page_one</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+
+<span class="n">page_two</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">button_two</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Button</span><span class="p">(</span><span class="n">page_two</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;page one&quot;</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="n">show_page_one</span><span class="p">)</span>
+<span class="n">label_two</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">page_two</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;on page two&quot;</span><span class="p">)</span>
+<span class="n">label_two</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">fill</span><span class="o">=</span><span class="n">tk</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+<span class="n">button_two</span><span class="o">.</span><span class="n">pack</span>
+<span class="c1"># don&#39;t pack page_two</span>
+</pre></div>
+</div>
+<div class="section" id="creating-a-second-window">
+<h3>Creating a second window</h3>
+<p>If you need another window, use a <tt class="docutils literal">Toplevel</tt> widget. This can be built up in the same way as a normal <tt class="docutils literal">Tk</tt> or <tt class="docutils literal">Frame</tt> widget. A <tt class="docutils literal">Toplevel</tt> displays upon creation, so typically I will subclass it (e.g. <tt class="docutils literal">class MySubclass(tk.Toplevel):</tt>), create its child widgets within <tt class="docutils literal">__init__</tt>, then display it by calling <tt class="docutils literal">MySubclass(master)</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">popup</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Toplevel</span><span class="p">(</span><span class="n">master</span><span class="p">)</span>
+<span class="n">label</span> <span class="o">=</span> <span class="n">tk</span><span class="o">.</span><span class="n">Label</span><span class="p">(</span><span class="n">popup</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;look at this popup window!&quot;</span><span class="p">)</span>
+<span class="n">label</span><span class="o">.</span><span class="n">pack</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

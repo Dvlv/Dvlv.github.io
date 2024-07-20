@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Installing Fedora Alongside Windows 10 Dual Boot</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/installing-fedora-alongside-windows-10-dual-boot.html" rel="bookmark"
+           title="Permalink to Installing Fedora Alongside Windows 10 Dual Boot">Installing Fedora Alongside Windows 10 Dual Boot</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>I've recently installed Fedora Silverblue on my Gaming Laptop, the last of my machines running Windows 10.
+Getting it installed to dual boot took quite a few attempts, so I'll document here how to set it up successfully.</p>
+<p>If you haven't already, you will need to clear some space on the drive with Windows. You can actually shrink the drive Windows is currently booted from, which
+I don't believe you can do with Linux. Search the internet for "Windows 10 create disk partition" for a tutorial on this.</p>
+<p>Follow the Fedora installer as normal. When you get to the Disk section, select your drive and choose "Manual" from
+the set of radiobuttons. Then press "Next" in the top left corner.</p>
+<p>You should then be presented with the partion creator. I had to open up the drive by clicking a bit
+which said "Unknown &gt;" on the middle-left of the installer.</p>
+<p>Using the Plus button underneath the list of partitions, you will want to create three new partitons within the empty space you have created:</p>
+<ul>
+<li>1024 MB, vfat, mounted at /boot</li>
+<li>512MB, efi, mounted at /boot/efi</li>
+<li>The rest of the drive, whatever format you want (I went with the recommended btrfs), Mounted at /</li>
+</ul>
+<p>Even though the drive already had an existing EFI Partition, mounting that at /boot/efi did not work. I needed to make another one for Fedora.</p>
+<p>Then confirm this and follow the installer as normal. Fingers crossed, it should complete.</p>
+<p>Grub still finds both efi partitions and lets me boot either OS easily.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

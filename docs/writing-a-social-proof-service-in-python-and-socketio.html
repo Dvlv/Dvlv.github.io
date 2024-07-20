@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Writing a Social Proof Service in Python and SocketIO</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/writing-a-social-proof-service-in-python-and-socketio.html" rel="bookmark"
+           title="Permalink to Writing a Social Proof Service in Python and SocketIO">Writing a Social Proof Service in Python and SocketIO</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>For the unaware, a social proof service is typically an externally-hosted SaaS product which, when integrated with a customer's website, displays a
+small notification card at the bottom of the screen whenever a person performs some action on that website, such as signing up for a newsletter or buying
+a product.</p>
+<p>Providers of these services claim that using them will increase converstion rates. Obviously this must be taken with a grain of salt, as these
+people are trying to sell their service! Still, it is an interesting thing to consider.</p>
+<p>I was interested in the technology behind this, and thought that the concept would work rather well for one of the websites I run at work. This lead
+me to attempt to make such a service myself. As it turns out, it is incredibly simple to do.</p>
+<div class="section" id="an-outline-of-how-it-works">
+<h2>An outline of how it works</h2>
+<p>I have a site which acts as a sort of CMS (it's a really difficult one to explain). The front-end of this site is using a drag-and-drop website builder, and
+it communicates with the CMS via liberal use of javascript's <tt class="docutils literal">innerHTML</tt>.</p>
+<p>The initial goal was to integrate the social-proofing service to the rest of the CMS, since the front-end already talks to it.</p>
+<p>It didn't seem to be possible to do this, but luckily <tt class="docutils literal">flask_socketio</tt> made the actual server-side so simple that this became no problem at all.</p>
+<p>In its final form, the server-side involved a very small file, similar in size to a hello_world flask tutorial, and an HTML snippet which would
+just need to be pasted into the homepage of the website-builder to handle everything else.</p>
+</div>
+<div class="section" id="writing-the-server">
+<h2>Writing the server</h2>
+<p>The server makes use of the aforementioned <tt class="docutils literal">flask_socketio</tt> to run a very simple server. An <tt class="docutils literal">app</tt> is created just like a normal flask site, and
+a single route is added, which is responsible for performing the broadcast to all connected sockets.</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">flask_socketio</span> <span class="kn">import</span> <span class="n">SocketIO</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">from_object</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">app</span><span class="o">.</span><span class="n">secret_key</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;flask&quot;</span><span class="p">][</span><span class="s2">&quot;secret_key&quot;</span><span class="p">]</span>
+<span class="n">socketio</span> <span class="o">=</span> <span class="n">SocketIO</span><span class="p">(</span>
+    <span class="n">app</span><span class="p">,</span>
+    <span class="n">cors_allowed_origins</span><span class="o">=</span><span class="p">[</span>
+        <span class="s2">&quot;http://127.0.0.1:5000&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;https://my-domain.com&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+<span class="n">API_KEY</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;proof&quot;</span><span class="p">][</span><span class="s2">&quot;api_key&quot;</span><span class="p">]</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/signup&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">on_signup</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    When POSTed to, sends a socketio message telling</span>
+<span class="sd">    all listening visitors that an offer was just</span>
+<span class="sd">    taken out.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span>
+
+    <span class="n">api_key</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;api_key&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">api_key</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">api_key</span> <span class="o">==</span> <span class="n">API_KEY</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Bad or missing API key&quot;</span><span class="p">,</span> <span class="mi">401</span>
+
+    <span class="n">img_path</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;img_path&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;default&quot;</span>
+    <span class="n">offer_name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;offer_name&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;one of our partners&quot;</span>
+    <span class="n">user_name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;user_name&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;someone&quot;</span>
+
+    <span class="n">socketio</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span>
+        <span class="s2">&quot;signup&quot;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s2">&quot;img_path&quot;</span><span class="p">:</span> <span class="n">img_path</span><span class="p">,</span> <span class="s2">&quot;offer_name&quot;</span><span class="p">:</span> <span class="n">offer_name</span><span class="p">,</span> <span class="s2">&quot;user_name&quot;</span><span class="p">:</span> <span class="n">user_name</span><span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="s2">&quot;thanks&quot;</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">socketio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6009</span><span class="p">)</span>
+</pre></div>
+<p>We set up a <tt class="docutils literal">flask_socketio</tt> server in much the same way as we would a regular flask server. The urls of our website
+are passed to the <tt class="docutils literal">cors_allowed_origins</tt> so that random people cannot send messages to our socket server. The <tt class="docutils literal">api_key</tt>
+acts in much the same way.</p>
+<p>The POST request takes 3 parameters, and we will see what these are used for in the client code now.</p>
+</div>
+<div class="section" id="writing-the-client">
+<h2>Writing the client</h2>
+<p>The client is a bit more complicated than the server, as it has to handle injecting the HTML, the logic for displaying it, and a rather crude queue to
+handle the case when multiple sign-ups happen in quick succession (which we know is absolutely the case with this particular site).</p>
+<div class="highlight"><pre><span></span><span class="kd">function</span> <span class="nx">onSignup</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">window</span><span class="p">.</span><span class="nx">popupIsVisible</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">showPopup</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nb">window</span><span class="p">.</span><span class="nx">backlog</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="kd">function</span> <span class="nx">displayFromBacklog</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">backlog</span><span class="p">.</span><span class="nx">length</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nb">window</span><span class="p">.</span><span class="nx">popupIsVisible</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">showPopup</span><span class="p">(</span><span class="nb">window</span><span class="p">.</span><span class="nx">backlog</span><span class="p">.</span><span class="nx">shift</span><span class="p">());</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">afterCooldown</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">window</span><span class="p">.</span><span class="nx">popupIsVisible</span> <span class="o">&amp;&amp;</span> <span class="nb">window</span><span class="p">.</span><span class="nx">backlog</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">displayFromBacklog</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">hidePopup</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;proof-popup&#39;</span><span class="p">).</span><span class="nx">classList</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="s1">&#39;visible&#39;</span><span class="p">);</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">popupIsVisible</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="nx">setTimeout</span><span class="p">(</span><span class="nx">afterCooldown</span><span class="p">,</span> <span class="mf">2000</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">showPopup</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">offerName</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="s2">&quot;offer_name&quot;</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">userName</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="s2">&quot;user_name&quot;</span><span class="p">];</span>
+    <span class="kd">var</span> <span class="nx">imgPath</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="s2">&quot;img_path&quot;</span><span class="p">];</span>
+
+    <span class="kd">var</span> <span class="nx">imageTarget</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">&#39;#proof-popup #image img&#39;</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">messageTarget</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">&#39;#proof-popup #message&#39;</span><span class="p">);</span>
+
+    <span class="nx">imageTarget</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="nx">imgPath</span><span class="p">;</span>
+    <span class="nx">messageTarget</span><span class="p">.</span><span class="nx">innerText</span> <span class="o">=</span> <span class="nx">userName</span> <span class="o">+</span> <span class="s2">&quot; just signed up with &quot;</span> <span class="o">+</span> <span class="nx">offerName</span> <span class="o">+</span> <span class="s2">&quot;!&quot;</span><span class="p">;</span>
+
+    <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">&#39;proof-popup&#39;</span><span class="p">).</span><span class="nx">classList</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="s1">&#39;visible&#39;</span><span class="p">);</span>
+    <span class="nb">window</span><span class="p">.</span><span class="nx">popupIsVisible</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+
+    <span class="nx">setTimeout</span><span class="p">(</span><span class="nx">hidePopup</span><span class="p">,</span> <span class="mf">3500</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">addPopupHtml</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">popupMain</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;div&#39;</span><span class="p">);</span>
+    <span class="nx">popupMain</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="s1">&#39;proof-popup&#39;</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">popupImgDiv</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;div&#39;</span><span class="p">);</span>
+    <span class="nx">popupImgDiv</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="s1">&#39;image&#39;</span>
+
+    <span class="kd">var</span> <span class="nx">popupImg</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;img&#39;</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">popupMessage</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;div&#39;</span><span class="p">);</span>
+    <span class="nx">popupMessage</span><span class="p">.</span><span class="nx">id</span> <span class="o">=</span> <span class="s1">&#39;message&#39;</span>
+
+    <span class="nx">popupMain</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">popupImgDiv</span><span class="p">);</span>
+    <span class="nx">popupImgDiv</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">popupImg</span><span class="p">);</span>
+
+    <span class="nx">popupMain</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">popupMessage</span><span class="p">);</span>
+
+    <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">popupMain</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nb">window</span><span class="p">.</span><span class="nx">popupIsVisible</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+<span class="nb">window</span><span class="p">.</span><span class="nx">backlog</span> <span class="o">=</span> <span class="p">[];</span>
+
+<span class="nx">addPopupHtml</span><span class="p">();</span>
+
+<span class="kd">var</span> <span class="nx">socket</span> <span class="o">=</span> <span class="nx">io</span><span class="p">(</span><span class="s2">&quot;http://127.0.0.1:6009&quot;</span><span class="p">);</span>
+
+<span class="nx">socket</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;connect&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;im connected&quot;</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="nx">socket</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;signup&#39;</span><span class="p">,</span> <span class="nx">onSignup</span><span class="p">);</span>
+</pre></div>
+<p>Quite a lot to take in, so we'll go over it piece by piece.</p>
+<p>The function <tt class="docutils literal">addPopupHtml</tt> is used to add a few HTML elements to the end of the &lt;body&gt; of the page, which will contain the
+popup itself. We have a wrapping div, a thumbnail image, and some text. The image will be populated by what is posted to
+the <tt class="docutils literal">img_path</tt> parameter. The text will be built from the <tt class="docutils literal">offer_name</tt> and <tt class="docutils literal">user_name</tt> parameters.</p>
+<p>After injecting this HTML, we connect to our socket server and add a listener to the &quot;signup&quot; event. This is the event
+emitted from our server's route, which sends the three POST parameters to our javascrupt.</p>
+<p>If a popup is already visible, we will add the received data to our backlog, otherwise we have a popup to show.</p>
+<p>The <tt class="docutils literal">showPopup</tt> function takes those three pieces of informtion and does the filling-in of the injected popup
+HTML, then assigns the &quot;visible&quot; class to the popup's wrapper div, which makes it display to the user.</p>
+<p>We also set a global <tt class="docutils literal">popupIsVisible</tt> variable against the window, and kick off a function to hide the popup again
+after 3 and a half seconds.</p>
+<p>Hiding the popup is as simple as just removing the &quot;visible&quot; class from it, and then we set another timeout to check
+for the presence of a backlog.</p>
+<p>If we have a backlog, we <tt class="docutils literal">shift</tt> the oldest set of information from the backlog and display it as a popup in the
+same way.</p>
+<p>Now that the logic is all in place, let's see how the styling is making that &quot;visible&quot; class work.</p>
+</div>
+<div class="section" id="the-styling">
+<h2>The styling</h2>
+<div class="highlight"><pre><span></span><span class="p">#</span><span class="nn">proof-popup</span> <span class="p">{</span>
+    <span class="k">position</span><span class="p">:</span> <span class="kc">fixed</span><span class="p">;</span>
+    <span class="k">display</span><span class="p">:</span> <span class="kc">flex</span><span class="p">;</span>
+    <span class="k">flex-direction</span><span class="p">:</span> <span class="kc">row</span><span class="p">;</span>
+    <span class="k">justify-content</span><span class="p">:</span> <span class="kc">space</span><span class="o">-</span><span class="n">evenly</span><span class="p">;</span>
+    <span class="k">align-items</span><span class="p">:</span> <span class="kc">center</span><span class="p">;</span>
+    <span class="k">bottom</span><span class="p">:</span> <span class="mi">10</span><span class="kt">px</span><span class="p">;</span>
+    <span class="k">right</span><span class="p">:</span> <span class="mi">-320</span><span class="kt">px</span><span class="p">;</span>
+    <span class="kp">-webkit-</span><span class="k">transition</span><span class="p">:</span> <span class="kc">right</span> <span class="mf">1.25</span><span class="kt">s</span> <span class="kc">ease</span><span class="p">;</span>
+    <span class="k">transition</span><span class="p">:</span> <span class="kc">right</span> <span class="mf">1.25</span><span class="kt">s</span> <span class="kc">ease</span><span class="p">;</span>
+    <span class="k">width</span><span class="p">:</span> <span class="mi">310</span><span class="kt">px</span><span class="p">;</span>
+    <span class="k">height</span><span class="p">:</span> <span class="mi">100</span><span class="kt">px</span><span class="p">;</span>
+    <span class="k">border-radius</span><span class="p">:</span> <span class="mi">20</span><span class="kt">px</span><span class="p">;</span>
+    <span class="k">background</span><span class="p">:</span> <span class="mh">#452462</span><span class="p">;</span>
+    <span class="k">color</span><span class="p">:</span> <span class="kc">white</span><span class="p">;</span>
+    <span class="k">border</span><span class="p">:</span> <span class="mi">2</span><span class="kt">px</span> <span class="kc">solid</span> <span class="mh">#ddd</span><span class="p">;</span>
+    <span class="k">font-family</span><span class="p">:</span> <span class="s2">&quot;Roboto&quot;</span><span class="p">,</span> <span class="s1">&#39;Segoe UI&#39;</span><span class="p">,</span> <span class="n">Tahoma</span><span class="p">,</span> <span class="n">Geneva</span><span class="p">,</span> <span class="n">Verdana</span><span class="p">,</span> <span class="kc">sans-serif</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">#</span><span class="nn">proof-popup</span><span class="p">.</span><span class="nc">visible</span> <span class="p">{</span>
+    <span class="k">right</span><span class="p">:</span> <span class="mi">10</span><span class="kt">px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">#</span><span class="nn">proof-popup</span> <span class="p">#</span><span class="nn">image</span> <span class="p">{</span>
+    <span class="k">width</span><span class="p">:</span> <span class="mi">20</span><span class="kt">%</span><span class="p">;</span>
+    <span class="k">height</span><span class="p">:</span> <span class="kc">auto</span><span class="p">;</span>
+    <span class="k">float</span><span class="p">:</span> <span class="kc">left</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">#</span><span class="nn">proof-popup</span> <span class="p">#</span><span class="nn">image</span> <span class="nt">img</span> <span class="p">{</span>
+    <span class="k">width</span><span class="p">:</span> <span class="mi">100</span><span class="kt">%</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">#</span><span class="nn">proof-popup</span> <span class="p">#</span><span class="nn">message</span> <span class="p">{</span>
+    <span class="k">width</span><span class="p">:</span> <span class="mi">70</span><span class="kt">%</span><span class="p">;</span>
+    <span class="k">float</span><span class="p">:</span> <span class="kc">left</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">@</span><span class="k">media</span> <span class="nt">screen</span> <span class="nt">and</span> <span class="o">(</span><span class="nt">max-width</span><span class="o">:</span> <span class="nt">767px</span><span class="o">)</span> <span class="p">{</span>
+    <span class="p">#</span><span class="nn">proof-popup</span> <span class="p">{</span>
+        <span class="k">width</span><span class="p">:</span> <span class="mi">90</span><span class="kt">%</span><span class="p">;</span>
+        <span class="k">bottom</span><span class="p">:</span> <span class="mi">-105</span><span class="kt">%</span><span class="p">;</span>
+        <span class="k">right</span><span class="p">:</span> <span class="mi">5</span><span class="kt">%</span><span class="p">;</span>
+        <span class="kp">-webkit-</span><span class="k">transition</span><span class="p">:</span> <span class="kc">bottom</span> <span class="mf">1.25</span><span class="kt">s</span> <span class="kc">ease</span><span class="p">;</span>
+        <span class="k">transition</span><span class="p">:</span> <span class="kc">bottom</span> <span class="mf">1.25</span><span class="kt">s</span> <span class="kc">ease</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">#</span><span class="nn">proof-popup</span><span class="p">.</span><span class="nc">visible</span> <span class="p">{</span>
+        <span class="k">bottom</span><span class="p">:</span> <span class="mf">2.5</span><span class="kt">%</span><span class="p">;</span>
+        <span class="k">right</span><span class="p">:</span> <span class="mi">5</span><span class="kt">%</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+</pre></div>
+<p>Not a great deal to say about this, it's making the popup appear as a small, rounded box in the corner of a desktop screen, or the center-bottom of a
+mobile screen.</p>
+<p>On desktop, the popup will animate in from the right of the screen, then animate away by going left again. On a mobile, it
+comes in from the bottom, then hides back down again.</p>
+</div>
+<div class="section" id="putting-it-together">
+<h2>Putting it together</h2>
+<p>So now we have a server listening for a POST request, and a client which establishes a socket connection to this server. All that's left to do now
+is integrate it with our website.</p>
+<p>This is as simple as sending a POST request whenever a user signs up. I won't show the real production code here, since it's wrapped in business logic,
+but hopefully you know how to send a POST request contianing the three parameters from the earlier server code.</p>
+<p>With this all in place, I just had to provide a small snippet of HTML to the person who builds the front end.</p>
+<div class="highlight"><pre><span></span><span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js&quot;</span> <span class="na">integrity</span><span class="o">=</span><span class="s">&quot;sha256-bQmrZe4yPnQrLTY+1gYylfNMBuGfnT/HKsCGX+9Xuqo=&quot;</span> <span class="na">crossorigin</span><span class="o">=</span><span class="s">&quot;anonymous&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;https://my-domain.com/static/css/proof.css&quot;</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://my-domain.com/static/js/proof.js&quot;</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

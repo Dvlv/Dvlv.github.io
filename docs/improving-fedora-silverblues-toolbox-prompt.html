@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Improving Fedora Silverblue's Toolbox Prompt</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/improving-fedora-silverblues-toolbox-prompt.html" rel="bookmark"
+           title="Permalink to Improving Fedora Silverblue's Toolbox Prompt">Improving Fedora Silverblue's Toolbox Prompt</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>Fedora Silverblue uses a read-only <code>/usr</code> folder, meaning software should be installed via other means. One of those means is via Podman containers using a tool called Toolbox (which is being renamed Toolbx).</p>
+<p>When you enter one of these Toolbox containers, your prompt gains a small pink dot and the Hostname changes to "toolbox". This effect is, in my opinion, much too subtle.</p>
+<p><img src="/images/toolboxblog/1.png" alt="Default Toolbox Prompt" width="50%"></p>
+<p>Let's remedy this by editing the <code>PS1</code> prompt in <code>.bashrc</code>. TL;DR look at my .bashrc here: <a href="https://github.com/Dvlv/dotfiles/blob/master/.bashrc">Github Dotfiles</a></p>
+<h3 id="adding-some-colour-and-flair">Adding Some Colour and Flair</h3>
+<p>Let's add a bit of colour, and some shapes, around the PS1:</p>
+<pre><code class="language-bash">export PS1=&quot;\[\033[1;37m\]&lt;\u|\[\033[32m\]\w\[\033[97m\]&gt;\[\033[0m\] &quot;
+</code></pre>
+<p>This wraps the PS1 in angled brackets, replaces the hostname with the current working directory, sets the main colour to white and the current directory to green.</p>
+<p><img src="/images/toolboxblog/2.png" alt="Style" width="50%"></p>
+<p>Great, much better!</p>
+<h3 id="toolbox-indication">Toolbox Indication</h3>
+<p>Now we'll need this to change when we enter a Toolbox. As a Millenial, I'll use an emoji to indicate this, and also change the colour of the prompt from white to brown when inside a Toolbox.</p>
+<p>We can check if we're in a Toolbox by either reading the hostname, or checking for the metadata file <code>/run/.containerenv</code>, then echo a different emoji:</p>
+<pre><code class="language-bash">toolbox_or_not() {
+    HN=$(hostname)
+    if [ $HN = &quot;toolbox&quot; ]
+    then
+        echo &quot;🧰\[\033[38;5;094m\]&quot;
+    else
+        echo 💻
+    fi
+}
+
+</code></pre>
+<p>Now we'll add a call to this to our PS1:</p>
+<pre><code class="language-bash">export PS1=&quot;\[\033[1;37m\]&lt;$(toolbox_or_not):\u|\[\033[32m\]\w\[\033[97m\]&gt;\[\033[0m\] &quot;
+</code></pre>
+<p>Now there's an emoji and a colon before our username, and the Toolbox's prompt will be brown:</p>
+<p><img src="/images/toolboxblog/3.png" alt="With Emoji" width="50%"></p>
+<p>Now we just need to indicate which toolbox we are actually on. The hostname for all toolboxes is just "toolbox", so that's no help. Luckily we have that <code>/run/.containerenv</code> file:</p>
+<pre><code class="language-bash">get_toolbox_name() {
+    awk 'match($0, /name=/) {print $0}' /run/.containerenv | awk -F '&quot;' '$0=$2'
+}
+</code></pre>
+<p>Now we can get a <em>second</em> emoji to represent the Toolbox's name:</p>
+<pre><code class="language-bash">get_toolbox_emoji() {
+    TBNAME=$(get_toolbox_name)
+    case $TBNAME in
+
+        brave)
+            echo 🦁
+            ;;
+
+        chrome)
+            echo ⚽
+            ;;
+
+        py)
+            echo 🐍
+            ;;
+
+        *)
+            echo 🤷
+            ;;
+    esac
+}
+</code></pre>
+<p>And we just add this function to our <code>toolbox_or_not</code> like so:</p>
+<pre><code class="language-bash">toolbox_or_not() {
+    HN=$(hostname)
+    if [ $HN = &quot;toolbox&quot; ]
+    then
+        echo &quot;🧰$(get_toolbox_emoji)\[\033[38;5;094m\]&quot;
+    else
+        echo 💻
+    fi
+}
+
+</code></pre>
+<p>Now we have a much clearer indicator that a terminal window is actually a Toolbox, and a visual indicator as to which Toolbox we are in!</p>
+<p><img src="/images/toolboxblog/4.png" alt="Finished" width="50%"></p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

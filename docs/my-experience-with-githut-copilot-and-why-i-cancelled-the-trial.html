@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>My Experience with Githut Copilot, and Why I Cancelled The Trial</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/my-experience-with-githut-copilot-and-why-i-cancelled-the-trial.html" rel="bookmark"
+           title="Permalink to My Experience with Githut Copilot, and Why I Cancelled The Trial">My Experience with Githut Copilot, and Why I Cancelled The Trial</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>AI is all the rage at the moment, and my manager at work encouraged us to try out some of the new tooling which is doing the rounds; one of which being Github Copilot.</p>
+<p>I activated the 60 day trial and installed the Neovim plugin, and have been using it for somewhere around 50 days. As the title suggests, however, I will be
+cancelling the subscription before the free trial expires, as I'm not entirely happy with the product in its current form.</p>
+<p>In this post I'll go over my main reasons, roughly in <em>ascending</em> order of annoyance, and make a suggestion which, if possible, would make the experience immeasurably better.</p>
+<h2 id="taking-over-tab">Taking over Tab</h2>
+<p>The very first thing I noticed after installing the plugin was that it was arrogant enough to bind itself to Tab by default. Almost every editor and IDE I've used has
+the Tab key bound to completing the current word, meaning I'd be willing to bet almost all developers have muscle memory for typing a few letters and pressing Tab to complete
+things. I certainly do.</p>
+<p>Let's say for example I have a variable with a long name, <code>usersWithNoSubscription</code>, muscle memory would have me type <code>usersw</code> and press Tab to have the whole variable auto-completed for me. Often, Copilot would be able to predict a line in almost exactly the time I spent typing <code>usersw</code>, and so I would press Tab just as the predicted line appeared, and I would accidentally accept a whole line I hadn't even read. This got very annoying, very quickly.</p>
+<p>Luckily it's simple enough to re-bind the complete key (with the Neovim plugin, at least) so this was addressable, but put me off to a rocky start.</p>
+<h2 id="assuming-sqlalchemy">Assuming SQLAlchemy</h2>
+<p>Probably a minor gripe, but due to the popularity of SQLAlchemy in the python world, Copilot assumes all ORMs are SQLAlchemy's syntax (or possibly Django's).
+My workplace uses Peewee as its ORM, and thus Copilot is worse-than-useless for generating the queries.</p>
+<h2 id="hiding-whats-typed">Hiding What's Typed</h2>
+<p>This is another one that could just be a <em>me</em> thing, but when writing <code>if</code> or <code>for</code> statements in a C-style language, I'll usually write out all of the punctuation first, then move the cursor back into the brackets, e.g:</p>
+<pre><code>if (|) {
+}
+
+// or
+
+for (|) {
+}
+</code></pre>
+<p>The pipe above represents the cursor.</p>
+<p>When I do this, Copilot will then decide it knows what both the condition and the body are going to be, and writes it in light-grey after my cursor.</p>
+<p>The problem with this is that it hides everything already-typed after my cursor. This means, if I <em>don't</em> take its suggestion, I then can't see that there's already <code>) {</code> at the end of my cursor position, and tend to re-write them, causing invalid syntax when I then move down a line. If I <em>do</em> take Copilot's suggestion, it doesn't recognise that I already put a closing brace at the end, so I will end up with two. If I'm lucky enough to only be one-nest-deep, this just gets underlined red, but if I'm nested at all it will cause me to end the previous block early, causing annoying bugs if I don't notice.</p>
+<h2 id="auto-completing-typos">Auto-completing Typos</h2>
+<p>Unlike a normal language-server, Copilot will auto-complete typos. Say I was intending to type <code>PaymentReceived</code> but instead my fingers made <code>Pamye</code>, Copilot would often complete this to <code>PamyentReceived</code> for me, and I would often not even notice for a few seconds. It may be personal preference, but I find it more annoying to auto-complete a word then have to go back to the middle to fix it, rather than to not complete the word and make me fix the typo before I can get completion.</p>
+<p>I'm also pretty sure it once auto-completed <code>"recieved"</code> (entirely by itself) inside a JSON payload, causing me to have a few looks as to why the data wasn't saving to the database.</p>
+<h2 id="confidently-wrong">Confidently Wrong</h2>
+<p>This seems to be most people's main criticism of ChatGPT, and it <em>definitely</em> applies to Copilot. Copilot often throws methods or variables that just don't exist anywhere into its predictions.</p>
+<p>This is annoying-enough on single line predictions, but Copilot will often decide it knows that goes into an <code>if</code> statement before you've even begun typing the condition, and often it will <em>look</em> like exactly what you want when it's all in the light-grey preview, but once you accept it you'll see entire lines of red-underlining as it's comparing the result of a function that doesn't exist to an undefined variable. I'd argue this is actually worse than offering no prediction at all, as I then have to throw away everything in the <code>if</code> statement and start again.</p>
+<p>The same is true with imports. If I'm in a project which uses pluralised table names (ewww, I know) then the correct import would be <code>from models.users import Users</code>. Copilot doesn't realise this, and will happily complete <code>from models.us</code> to <code>from models.user import User</code>. As I work on projects which do both, I don't always notice that this is incorrect, and sometimes will jump down away from the imports before I've noticed it has been underlined.</p>
+<p>This is definitely the most annoying part of Copilot. It <em>looks correct</em> on first glance, but is sometimes just <em>subtly</em> wrong, and it can cost more time than would
+be saved had it been correct.</p>
+<h2 id="how-to-improve-copilot-maybe">How to Improve Copilot (maybe)</h2>
+<p>Now, I'm not sure if this is even possible technically, as I've never worked on anything like this, <em>buuuut</em> if it is, <em>this</em> is the way to improve Copilot:</p>
+<p><strong>Have it communicate with the Language Server!</strong></p>
+<p>If the predictions could be sent to the Language Server for validation before appearing, the Confidently Wrong-ness of Copilot would likely reduce dramatically.</p>
+<p>The Language Server knows that there is no file at <code>modules.users</code>, but there <em>is</em> at <code>modules.user</code>, and Copilot could be fed this information back and change its prediction - much like how users can tell ChatGPT it made a mistake, and it can correct itself in response.</p>
+<p>The Language Server could also stop it from producing methods and functions that don't exist, and possibly suggest close alternatives, such as when it would try to complete <code>get_user_by_id</code> when the actual method is <code>get_user_by_account_id</code>, the LS could nudge it toward the latter. </p>
+<p>Again, I've got no idea if there's even a way for this to be done, or even if it <em>was</em> possible whether it would be fast enough. Until <em>something</em> like this is implemented, however, I just feel like Copilot is <em>at best</em> a net-neutral, it costs me as much, if not <em>more</em>, time as it saves me.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

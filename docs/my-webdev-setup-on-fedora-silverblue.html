@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>My WebDev Setup on Fedora Silverblue</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/my-webdev-setup-on-fedora-silverblue.html" rel="bookmark"
+           title="Permalink to My WebDev Setup on Fedora Silverblue">My WebDev Setup on Fedora Silverblue</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>This post is a kind of follow-up to <a target="_blank" href="https://www.dvlv.co.uk/using-fedora-silverblue-for-a-more-secure-development-machine.html">my previous post about my work machine</a>, but with the changes that I've made since first setting up Silverblue, and a focus on the particular software I use for my job (and some details on how I use it, and how I've installed it).</p>
+<h2 id="software">Software</h2>
+<h3 id="editor-ide">Editor / IDE</h3>
+<p><strong>Neovim</strong> is my editor of choice. I'm still yet to find a "proper" IDE with good enough vim emulation to make a switch, so for now I'm staying.</p>
+<p>Notable Plugins:</p>
+<ul>
+<li>
+<p><strong>CoC</strong> - Language server for Neovim. I've had a play with the native LSP in Neovim but I just find CoC easier.</p>
+</li>
+<li>
+<p><strong>neovim-fuzzy</strong> - Quick-opening of files using <code>fzy</code> behind-the-scenes.</p>
+</li>
+<li>
+<p><strong>semantic-highlight.vim</strong> - Can't code without this anymore. This gives each variable / function its own colour, making scanning your eyes over code much quicker.</p>
+</li>
+<li>
+<p><strong>ack.vim</strong> - Provides searching over the entire project, similar to Ctrl-Shift-F functionality of graphical editors.</p>
+</li>
+</ul>
+<h3 id="terminal">Terminal</h3>
+<p><strong>Tilix</strong> is brilliant - it's got a quake mode, so I can drop it down at any time with F2, and it also supports both vertical and horizontal splitting, plus multiple tabs.</p>
+<p><strong>Yaquake</strong> does the same for me when on a Plasma desktop, but I can't use it as a "regular" terminal for coding, which I can with Tilix. </p>
+<h3 id="databases">Databases</h3>
+<p><strong>DBeaver</strong> is the best database explorer I've found, as I have to connect to a mix of both MySQL and Postgres databases. </p>
+<h3 id="api-tools">API Tools</h3>
+<p><strong>Insomnia</strong> is my current tool of choice for testing APIs. However, it's currently broken on Fedora, so I'm forced to use an older version inside flatpak. Next time I'm working on an API, I'll give <strong>HTTPie Desktop</strong> a try.</p>
+<h3 id="communications">Communications</h3>
+<p><strong>Evolution</strong> is my email client. My workplace uses Exchange, and it seems to be the only option for Linux.</p>
+<p><strong>Slack</strong> is my workplace's chat tool of choice. Linux compatability is fine, though to share your screen on Wayland currently requires using it in a browser which has Pipewire RTC enabled.</p>
+<h3 id="notes">Notes</h3>
+<p><strong>Standardnotes</strong> is amazing - E2E encrypted notes synced across devices. The free plan only allows for plaintext notes, though I find that's perfectly fine for quick jottings.</p>
+<h3 id="browsers">Browsers</h3>
+<p><strong>Brave</strong> is my choice for doing my work. I mostly make internal tools, and the people I make things for use Chrome, so I need to use something based on Chromium. Brave has some nice privacy-focused features, and definitely has the best icon!</p>
+<p><strong>LibreWolf</strong> is where I do my non-work-related browsing (HackerNews, checking the weather, etc.). This would normally be Firefox, more on this below, but tl;dr I need media codecs for YouTube.</p>
+<h3 id="office">Office</h3>
+<p><strong>LibreOffice</strong> handles the rare cases in which I have to interact with office documents. I <em>do</em> have a Windows 10 VM with MS Office installed just in case, but I've not had to use it.</p>
+<h3 id="images">Images</h3>
+<p><strong>Gimp</strong> handles any image editing I have to make myself. I've been using it since before I even knew what Linux was.</p>
+<p><strong>Photopea</strong> is my go-to if I get sent a <code>.psd</code> file from a designer, it handles them much better than Gimp from my experience.</p>
+<h3 id="honorable-mentions">Honorable Mentions</h3>
+<p><strong>Virt Manager</strong> powers all of the VMs I run, notably the Oracle 8 VM I do my work in, and the Windows 10 VM I keep around for MS Office. </p>
+<p>I have a bit of a tendancy to experiment with random software during quiet periods, and this can end up filling my work machine with random libraries and such. Now I'm on an immutable distro, I can use either podman containers or VMs to avoid this!</p>
+<p><strong>Gpaste</strong> is a clipboard history manager. Another thing I can't work without any more.</p>
+<p><strong>Jira</strong> is my workplace's choice of task-management software.</p>
+<p><strong>GitHub</strong> is where we store our code.</p>
+<p><strong>AWX</strong> handles CI/CD throughout the company.</p>
+<h2 id="packaging-methods">Packaging Methods</h2>
+<p>Since Fedora Silverblue is immutable, software is not always just installed from the package manager as it is in other distros. I'll list here my methods of installing different packages I've mentioned above.</p>
+<h3 id="layered-rpm-ostree">Layered (rpm-ostree)</h3>
+<ul>
+<li>Evolution (needed to integrate the EWS calendar with the Gnome Desktop Calendar)</li>
+<li>GPaste (as well as my other Gnome extensions, as I think it offers better guarantees of compatability)</li>
+<li>Virt Manager (I tried the flatpak of Gnome Boxes but it's much less powerful)</li>
+<li>Tilix (terminals kinda need to be native) </li>
+</ul>
+<h3 id="flatpak">Flatpak</h3>
+<ul>
+<li>Insomnia (as mentioned, all other versions do not work on current Fedora)</li>
+<li>LibreOffice</li>
+<li>Gimp</li>
+<li>LibreWolf - The inbuilt Firefox doesn't play ~75% of YouTube videos due to needing codecs. The suggested solution is to replace it with the Flatpak version, but I don't really want to remove base packages (nor do I want 2 Firefoxes) so I went with the Flatpak of LibreWolf instead. It comes with uBlock Origin and a bunch of the privacy-related changes I would have made anyway, which saves me quite a few clicks.</li>
+</ul>
+<h3 id="appimage">AppImage</h3>
+<ul>
+<li>Standardnotes</li>
+<li>HTTPie Desktop</li>
+<li>VSCodium (I use this very occasionally for C/C++ development just because I haven't bothered setting up CoC)</li>
+</ul>
+<h3 id="toolbox">Toolbox</h3>
+<ul>
+<li>Brave</li>
+<li>Chromium</li>
+<li>Google Chrome (you can never have too many browsers!)</li>
+</ul>
+<h3 id="tarballs-extracted-rpms">Tarballs / Extracted RPMs</h3>
+<ul>
+<li>DBeaver</li>
+<li>Slack</li>
+</ul>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

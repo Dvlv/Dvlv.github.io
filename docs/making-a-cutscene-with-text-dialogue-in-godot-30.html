@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Making a Cutscene with Text Dialogue in Godot 3.0</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/making-a-cutscene-with-text-dialogue-in-godot-30.html" rel="bookmark"
+           title="Permalink to Making a Cutscene with Text Dialogue in Godot 3.0">Making a Cutscene with Text Dialogue in Godot 3.0</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>When making a more fully-featured game in Godot, I often find myself needing to create a cutscene which displays an image and some text.</p>
+<p>I typically lay this out with the image taking the top 2/3 or 3/4 of the window, and a black box taking up the bottom remainder. Inside this
+box is where I place the name of who is speaking and the text.</p>
+<p>In this post, I will be showing off the way I do this.</p>
+<p>I am in no way saying this is the best, or the only, way to achieve this. It's just the way I came up with.</p>
+<div class="section" id="the-cutscene-scene">
+<h2>The Cutscene scene</h2>
+<p>The first thing I do is create a scene which will be able to draw the dialogue box over the top of another scene. I tend to save this as <tt class="docutils literal"><span class="pre">res://scenes/cutscene.tscn</span></tt>.</p>
+<p>The scene may look like so:</p>
+<img alt="Cutscene Scene in Godot" class="align-center" src="/images/godot/cutscene-scene.png" style="width: 90%;" />
+<p>The root of this scene is a <tt class="docutils literal">Control</tt> node, and it has two children - a <tt class="docutils literal">VBoxContainer</tt> and a <tt class="docutils literal">Timer</tt>.</p>
+<p>The <tt class="docutils literal">VBoxContainer</tt> has its <tt class="docutils literal">Margin</tt> Right set to the width of the game window, and its Bottom set to the height. Its <tt class="docutils literal">Size</tt> (inside Rect) is also set to the width and height of the window.</p>
+<p>Inside the <tt class="docutils literal">VBoxContainer</tt> are 3 or 4 <tt class="docutils literal">MarginContainer</tt> s. Under <tt class="docutils literal">Size Flags</tt> both Horizontal and Vertical are set to <tt class="docutils literal">Fill, Expand</tt>.</p>
+<p>The bottom <tt class="docutils literal">MarginContainer</tt> has a child <tt class="docutils literal">NinePatchRect</tt> which will act as the background for the dialogue text.</p>
+<p>Since it will be displaying text, there are three children of this <tt class="docutils literal">NinePatchRect</tt> - two <tt class="docutils literal">Label</tt> nodes and a <tt class="docutils literal">RichTextLabel</tt>.</p>
+<p>The top <tt class="docutils literal">Label</tt> will display the talker's name, and the bottom will display some text letting the user know that they can press a key to advance the cutscene. In this case, you can see in the image above that there is a hint to press Space. This will appear once all text in the current chunk has displayed.</p>
+<p>That <tt class="docutils literal">RichTextLabel</tt> is what will be used to animate the displaying of dialogue.</p>
+<p>Finally, that <tt class="docutils literal">Timer</tt> is set to 0.01, with <tt class="docutils literal">Autostart</tt> on and <tt class="docutils literal">One Shot</tt> off.</p>
+<p>That's the nodes set up, no we shall dig into the script which lets it function.</p>
+</div>
+<div class="section" id="the-cutscene-script">
+<h2>The Cutscene Script</h2>
+<p>This first script is assigned to the root <tt class="docutils literal">Control</tt> node.</p>
+<div class="highlight"><pre><span></span><span class="k">extends</span> <span class="n">Control</span>
+
+<span class="k">signal</span> <span class="n">finished_displaying</span>
+
+<span class="k">onready</span> <span class="k">var</span> <span class="n">TIMER</span> <span class="o">=</span> <span class="o">$</span><span class="n">Timer</span>
+<span class="k">onready</span> <span class="k">var</span> <span class="n">NAME</span> <span class="o">=</span> <span class="o">$</span><span class="n">VBoxContainer</span><span class="o">/</span><span class="n">MarginContainer</span><span class="o">/</span><span class="n">NinePatchRect</span><span class="o">/</span><span class="n">Name</span>
+<span class="k">onready</span> <span class="k">var</span> <span class="n">TEXT</span> <span class="o">=</span> <span class="o">$</span><span class="n">VBoxContainer</span><span class="o">/</span><span class="n">MarginContainer</span><span class="o">/</span><span class="n">NinePatchRect</span><span class="o">/</span><span class="n">Text</span>
+<span class="k">onready</span> <span class="k">var</span> <span class="n">ACCEPT</span> <span class="o">=</span> <span class="o">$</span><span class="n">VBoxContainer</span><span class="o">/</span><span class="n">MarginContainer</span><span class="o">/</span><span class="n">NinePatchRect</span><span class="o">/</span><span class="n">Accept</span>
+
+<span class="k">var</span> <span class="n">listening</span> <span class="o">=</span> <span class="bp">false</span>
+
+<span class="k">func</span> <span class="n">_ready</span><span class="p">():</span>
+    <span class="n">ACCEPT</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="bp">false</span>
+    <span class="n">TIMER</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;timeout&quot;</span><span class="p">,</span> <span class="n">TEXT</span><span class="p">,</span> <span class="s2">&quot;_on_Timer_timeout&quot;</span><span class="p">)</span>
+
+<span class="k">func</span> <span class="n">_process</span><span class="p">(</span><span class="n">delta</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">listening</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">Input</span><span class="o">.</span><span class="n">is_action_just_released</span><span class="p">(</span><span class="s2">&quot;ui_accept&quot;</span><span class="p">):</span>
+            <span class="n">ACCEPT</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="bp">false</span>
+            <span class="n">TEXT</span><span class="o">.</span><span class="n">visible_characters</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="bp">false</span>
+            <span class="n">listening</span> <span class="o">=</span> <span class="bp">false</span>
+            <span class="n">emit_signal</span><span class="p">(</span><span class="s2">&quot;finished_displaying&quot;</span><span class="p">)</span>
+
+<span class="k">func</span> <span class="n">set_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">NAME</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">name</span>
+
+<span class="k">func</span> <span class="n">set_text</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="n">TEXT</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">text</span>
+
+<span class="k">func</span> <span class="n">display_text</span><span class="p">():</span>
+    <span class="n">TIMER</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<span class="k">func</span> <span class="n">show_dialogue</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="bp">true</span>
+    <span class="n">listening</span> <span class="o">=</span> <span class="bp">false</span>
+    <span class="n">ACCEPT</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="bp">false</span>
+
+    <span class="n">set_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">set_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">display_text</span><span class="p">()</span>
+
+<span class="k">func</span> <span class="n">dialogue_finished_callback</span><span class="p">():</span>
+    <span class="n">TIMER</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+    <span class="n">ACCEPT</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="bp">true</span>
+    <span class="n">listening</span> <span class="o">=</span> <span class="bp">true</span>
+</pre></div>
+<p>After grabbing shorter references to the Labels we have a few basic functions allow for the setting of the name and dialogue text. We hide the Accept label (The one which says [Space] in the image above) and tell the script not to listen for a keypress by default.</p>
+<p>When a scene wishes to show some dialogue, it calls the <tt class="docutils literal">show_dialogue</tt> method with the speaker's name and what they are saying. This causes the Cutscene scene to become visible, set the name of the speaker and their words, then starts the <tt class="docutils literal">Timer</tt>.</p>
+<p>The <tt class="docutils literal">Timer</tt> node is linked to a function on the <tt class="docutils literal">RichTextLabel</tt> which will show the next character of text every time the timer counts down (every 0.01 seconds).</p>
+</div>
+<div class="section" id="the-richtextlabel-script">
+<h2>The RichTextLabel Script</h2>
+<div class="highlight"><pre><span></span><span class="k">extends</span> <span class="n">RichTextLabel</span>
+
+
+<span class="k">func</span> <span class="n">_on_Timer_timeout</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">visible_characters</span> <span class="o">&lt;</span> <span class="n">get_total_character_count</span><span class="p">():</span>
+        <span class="n">visible_characters</span> <span class="o">=</span> <span class="n">visible_characters</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">get_parent</span><span class="p">()</span><span class="o">.</span><span class="n">get_parent</span><span class="p">()</span><span class="o">.</span><span class="n">get_parent</span><span class="p">()</span><span class="o">.</span><span class="n">get_parent</span><span class="p">()</span><span class="o">.</span><span class="n">dialogue_finished_callback</span><span class="p">()</span>
+</pre></div>
+<p>Once the timer has ticked down enough times that every character has been displayed, the <tt class="docutils literal">Control</tt> node has its <tt class="docutils literal">dialogue_finished_callback</tt> method invoked, which stops the timer and sets it to listening.</p>
+<p>While listening, the &quot;[Space]&quot; text is displayed, and the scene listens for the &quot;ui_accept&quot; key to be pressed. Once it is detected, the dialogue scene is torn down to its beginning state and a signal &quot;finished_displaying&quot; is emitted.</p>
+<p>But what does this signal do? Well, it is linked to a global function which allows all scenes to use this Cutscene.</p>
+</div>
+<div class="section" id="the-global-functions">
+<h2>The Global Functions</h2>
+<p>To set up a global script in Godot, head to Project &gt; Project Settings &gt; Autoload, then set the name and path to your global script. You can now access it from any other script by its name.</p>
+<div class="highlight"><pre><span></span><span class="k">var</span> <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">func</span> <span class="n">tie_together_frames</span><span class="p">():</span>
+    <span class="n">frames</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">len</span><span class="p">(</span><span class="n">frames</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="k">var</span> <span class="n">current</span> <span class="o">=</span> <span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">current</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">is_connected</span><span class="p">(</span><span class="s2">&quot;finished_displaying&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;tie_together_frames&quot;</span><span class="p">):</span>
+      <span class="n">current</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;finished_displaying&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;tie_together_frames&quot;</span><span class="p">)</span>
+    <span class="n">current</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">callv</span><span class="p">(</span><span class="n">current</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">],</span> <span class="n">current</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">])</span>
+
+
+<span class="k">func</span> <span class="n">animated_scene</span><span class="p">(</span><span class="n">structure</span><span class="p">):</span>
+    <span class="c1"># structure is</span>
+    <span class="c1"># {target: [method, arg1, arg2, ...]}</span>
+    <span class="c1"># Every animation must emit finished_displaying upon completion to be included in this chain</span>
+
+    <span class="n">frames</span> <span class="o">=</span> <span class="n">structure</span>
+
+    <span class="k">var</span> <span class="n">current</span> <span class="o">=</span> <span class="n">frames</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">current</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;finished_displaying&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;tie_together_frames&quot;</span><span class="p">)</span>
+
+    <span class="c1"># begin executing the chain by calling the first item&#39;s method</span>
+    <span class="n">current</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">callv</span><span class="p">(</span><span class="n">current</span><span class="p">[</span><span class="s2">&quot;method&quot;</span><span class="p">],</span> <span class="n">current</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">])</span>
+</pre></div>
+<p>Our global script holds an array of &quot;frames&quot;. Each frame is a dictionary with three essential components:</p>
+<ul class="simple">
+<li><tt class="docutils literal">&quot;target&quot;</tt>: The class instnace which will be executing a method</li>
+<li><tt class="docutils literal">&quot;method&quot;</tt>: The method to call on this class (as a string)</li>
+<li><tt class="docutils literal">&quot;args&quot;</tt>: An array of argument values for the given method.</li>
+</ul>
+<p>Each of these methods must emit a signal of <tt class="docutils literal">&quot;finished_displaying&quot;</tt> in order for the chain of frames to connect.</p>
+<p>The goal of <tt class="docutils literal">animated_scene</tt> is to provide a starting point for the chaining together of the provided methods. It sets the global <tt class="docutils literal">frames</tt> variable to the provided structure, then
+connects the first method call to the <tt class="docutils literal">tie_together_frames</tt> global function, before finally calling the first method.</p>
+<p>Once that first method emits <tt class="docutils literal">&quot;finished_displaying&quot;</tt> the <tt class="docutils literal">tie_together_frames</tt> function will be invoked.</p>
+<p>This function pops the front method from the <tt class="docutils literal">frames</tt> array (the one which was just called) then checks if there are still more to call.</p>
+<p>If there are, it will tie the <tt class="docutils literal">&quot;finished_displaying&quot;</tt> signal to itself before calling that method.</p>
+<p>This repeats until there are no more frames left to call.</p>
+</div>
+<div class="section" id="using-the-animated-scene-method">
+<h2>Using the <tt class="docutils literal">animated_scene</tt> method</h2>
+<p>In any scene which wants to display a dialogue cutscene, just add a <tt class="docutils literal">CanvasLayer</tt> node with a child instance of the <tt class="docutils literal">Cutscene</tt> scene. This ensures that your dialogue box will always be on top of any other assets.</p>
+<p>Then in your script, grab a reference to the Cutscene instance and pass its <tt class="docutils literal">show_dialogue</tt> method on over to <tt class="docutils literal">animated_scene</tt></p>
+<div class="highlight"><pre><span></span><span class="k">func</span> <span class="n">_ready</span><span class="p">():</span>
+    <span class="k">var</span> <span class="n">CS</span> <span class="o">=</span> <span class="o">$</span><span class="n">Cutscene</span>
+
+    <span class="n">global</span><span class="o">.</span><span class="n">animated_scene</span><span class="p">([</span>
+        <span class="p">{</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">CS</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;show_dialogue&quot;</span><span class="p">,</span> <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Character One&quot;</span><span class="p">,</span> <span class="s2">&quot;Hello!&quot;</span><span class="p">]},</span>
+        <span class="p">{</span><span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">CS</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;show_dialogue&quot;</span><span class="p">,</span> <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Character Two&quot;</span><span class="p">,</span> <span class="s2">&quot;Hi!&quot;</span><span class="p">]},</span>
+    <span class="p">])</span>
+</pre></div>
+<p>Since the <tt class="docutils literal">animated_scene</tt> function works with any class which will emit <tt class="docutils literal">&quot;finished_displaying&quot;</tt>, you can use it with methods other than the Cutscene's <tt class="docutils literal">show_dialogue</tt>, too.</p>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

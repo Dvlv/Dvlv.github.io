@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Learning a Compiled Language as a Python Fan</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/learning-a-compiled-language-as-a-python-fan.html" rel="bookmark"
+           title="Permalink to Learning a Compiled Language as a Python Fan">Learning a Compiled Language as a Python Fan</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>It's probably no secret that python is my favourite programming language. The speed at which you can get a complicated program up and running is amazing.
+My day job as a web developer is one of the places where python shines the most, and so I get to work with it on a daily basis.
+Not only that, but there is also a game engine which is both Free software, and has its own language which is based around python - Godot.</p>
+<p>While gdscript isn't <em>exactly</em> python, it's so close that learning it was almost no effort. The only thing that ever gets me is remembering to put <tt class="docutils literal">var</tt> in front
+of variables!</p>
+<p>Despite my happiness with the language, I am made aware of python's main drawback on a couple of projects at work.</p>
+<p>Python is slow.</p>
+<p>When it comes to big data-processing tasks python can cope, but it is far from the best tool for the job.</p>
+<p>My workplace likes to roll its own analytics tools, which means we have a relentless supply of data from multiple sources which need to be managed and stored in the
+right place, as well as easily queried. Whilst it is <em>possible</em> to use some kind of queue, such as <tt class="docutils literal">celery</tt>, to ease the pressure off of our system, this is ultimately
+a task which python is the wrong tool for.</p>
+<p>There is also the problem of cross-platform distribution of tools. When I wrote my second book, (<a class="reference external" href="https://www.dvlv.co.uk/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming By Example</a>) for Packt, I ended the book with a chapter on how to compile and release a python GUI application. I have never really felt the need to do this before, so the difficulty was eye-opening for me. Unless you're distributing as source and telling the user to install python, or just via pip, there's no easy way to package for all platforms from a single one (meaning I need a windows machine to build an .exe, a Mac to build an .app, etc).</p>
+<p>So, in the interest of not niche'ing myself too much down into a python-bot, I've decided I want to branch out and learn a compiled language. The problem is, it's way too easy to compare them to python, quickly decide I don't like them, then give up.</p>
+<p>It's also become clear to me that I can watch video tutorials and read all sorts of books / guides and understand perfectly what's going on. Then, as soon as it comes to writing something with that language, I realise I can't do it as instinctively as I can with languages I use every day. I think that's a general thing when it comes to learning programming - you can't just <em>watch</em>, you have to <em>do</em>!</p>
+<p>I set myself the challenge of building the same thing in a few different compiled languages. This &quot;thing&quot; had to be something which gives me an idea of the general experience of working in this language, but not be so complicated that it takes weeks, since I know of my tendencies to give up.</p>
+<p>The project I chose was to rewrite a git helper I've been using for many years, written in python of course. I wrote it back in 2013 when my workplace-at-the-time moved from svn to git. It contains a few challenges which would hopefully give me an idea of how complex certain things would be in a particular language.</p>
+<p>I would normally link to the python version now, but I don't make the source code publically available because I doubt anyone else would want it, and some iterations have contained business-specific commands. I will, however, show snippets of my attempts in the languages I try out.</p>
+<div class="section" id="the-git-helper">
+<h2>The git helper</h2>
+<p>The original helpers is essentially a script called along with some command line arguments which performs the verbose git commands in the background using <tt class="docutils literal">os.system</tt>. Since I came up with the name easy-git (which I later found out was <a class="reference external" href="https://people.gnome.org/~newren/eg/">already a thing</a>) I use the script for a basic git workflow like so:</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal">eg stat</tt> (git status)</li>
+<li><tt class="docutils literal">eg add &lt;file&gt; &lt;file&gt;</tt> (git add &lt;file&gt; &lt;file&gt;)</li>
+<li><tt class="docutils literal">eg cm adding a new feature</tt> (git commit -m &quot;adding a new feature&quot;)</li>
+<li><tt class="docutils literal">eg origin</tt> (git push origin &lt;branch&gt;)</li>
+</ul>
+</blockquote>
+<dl class="docutils">
+<dt>The basic subset of features I wanted to complete with each version of the helper were as follows:</dt>
+<dd><ul class="first last simple">
+<li>The &quot;engine&quot; of the file, parsing the first command line argument to determine what function to run</li>
+<li><tt class="docutils literal">stat</tt> -&gt; run <tt class="docutils literal">git status</tt></li>
+<li><tt class="docutils literal">cm</tt> -&gt; run <tt class="docutils literal">git commit</tt> with extra args as the commit message</li>
+<li><tt class="docutils literal">branch</tt> -&gt; gets current branch name</li>
+<li><tt class="docutils literal">origin</tt> -&gt; push current branch to origin</li>
+<li><tt class="docutils literal">usage</tt> -&gt; print something to the console telling the user how to use it when the supplied arguments are wrong.</li>
+</ul>
+</dd>
+</dl>
+<p>With just this in place, as I was keeping each demo on Github, the resulting binary would eventually be able to be used to update itself.</p>
+<p>Now I needed some languages to evaluate.</p>
+</div>
+<div class="section" id="the-language-candidates">
+<h2>The language candidates</h2>
+<div class="section" id="c">
+<h3>C++</h3>
+<p>During the beginning of my interest in game development I bought a book about C++. I thought the language was alright. I had only really been doing Java at the time, so it was mostly what I was used to. I also did a module at university which was exclusively in C++, so I have a <em>slight</em> bit of background on it.</p>
+<p>Despite the fact that it gets a lot of smack-talk online (then again, which language doesn't) I can't deny the <strong>huge</strong> community behind it, which is very important in all stages of using a programming language.</p>
+</div>
+<div class="section" id="d">
+<h3>D</h3>
+<p>Can't remember how I stumbled upon D, but it advertised itself as a nice middle between python and C++, so I had no real choice but to give this one a look.</p>
+<p>The syntax looked fairly standard and the documentation for the standard library seemed very thorough, so I added it to the list.</p>
+</div>
+<div class="section" id="nim">
+<h3>Nim</h3>
+<p>Nim came up when I was researching D. Some folk on reddit were saying Nim is D's main competitor. I gave it a look and was (as you can predict) quite impressed by its syntax. It's quite similar to python, being whitespace-significant and having the same import structure. It's also very interesting that nim code compiles down to a few other languages, namely C, C++, Obj-C and JS.</p>
+<p>Needless to say, Nim went immediately on the list.</p>
+</div>
+<div class="section" id="rust">
+<h3>Rust</h3>
+<p>I began looking at rust a while back during a quiet time at work. While it looked very complicated, I liked what it was trying to accomplish as a fast and safe language. From a community standpoint, being backed by Mozilla also can't hurt.</p>
+</div>
+<div class="section" id="go">
+<h3>Go</h3>
+<p>We have some Go code at work, and while I don't like it much, one of my colleagues is adamant that it's an amazing language, and my experiences were tainted by bad code in an older version. I hesitantly threw this onto the last spot on my list.</p>
+</div>
+<div class="section" id="honorable-mentions">
+<h3>Honorable Mentions</h3>
+<p>Some languages which I checked out but have struck from the list:</p>
+<div class="section" id="pascal">
+<h4>Pascal</h4>
+<p>I like the syntax of Pascal, but it seems quite dead at this point. I also find the fact that there are enterprise-distributions of the language very confusing.</p>
+</div>
+<div class="section" id="id1">
+<h4>C</h4>
+<p>I briefly considered C, but after some searching many people claim that it isn't too much faster than C++, and is mainly used when you need to get very close to hardware. That's not really my area of interest, so I gave C a pass.</p>
+</div>
+<div class="section" id="dart">
+<h4>Dart</h4>
+<p>I did a lot of looking into dart. I quite liked the look of it, but I have no idea where dart is as a language. I don't think version 2 can even be ahead-of-time compiled anymore, and it seems that dart's fate is with flutter. Nevertheless, if I find myself writing a mobile app which isn't a game, I am definitely keen to give flutter a look.</p>
+</div>
+<div class="section" id="crystal">
+<h4>Crystal</h4>
+<p>Crystal looks cool in that it uses ruby syntax but is a compiled language. Thing is I don't much like ruby's syntax, despite how similar it is to python. It was a brief consideration, but I don't think I would opt to use it over any of those I've already chosen, so I gave it a miss.</p>
+</div>
+</div>
+</div>
+<div class="section" id="coding-begins">
+<h2>Coding Begins</h2>
+<p>With my list at a reasonable 5, it came time to start writing some code. I began with C++</p>
+<div class="section" id="id2">
+<h3>C++</h3>
+<p>I heard from my uni days that writing <tt class="docutils literal">using namespace std</tt> was terrible practise and would lose us marks, so I instead ended up writing a truckload of <tt class="docutils literal">std::</tt>, as well as mistyping a load of <tt class="docutils literal">std:</tt> and getting annoyed.</p>
+<p>The first thing I ran into when building the C++ version was the fact that it cannot <tt class="docutils literal">switch</tt> on a string. I wanted to avoid a huge chain of if-else, so I had to come up with another idea.</p>
+<p>That idea was to have a map of string to function references which I passed the first <tt class="docutils literal">argv</tt> to.
+Since there are two types of function - those which take the rest of the <tt class="docutils literal">argv</tt> and those which take no arguments - I split the &quot;engine&quot; up into two maps. The map checked will be determined by the length of <tt class="docutils literal">argv</tt> (called <tt class="docutils literal">argc</tt> in c++).</p>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">funcMap</span> <span class="o">=</span> <span class="n">buildNoArgsFuncMap</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">argsFuncMap</span> <span class="o">=</span> <span class="n">buildArrayArgsFuncMap</span><span class="p">();</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">usage</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">argc</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">funcMap</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">funcMap</span><span class="p">[</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]]();</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">usage</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">argsFuncMap</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">wantedArgs</span><span class="p">(</span><span class="n">argv</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">argv</span> <span class="o">+</span> <span class="n">argc</span><span class="p">);</span>
+            <span class="n">argsFuncMap</span><span class="p">[</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]](</span><span class="n">wantedArgs</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">usage</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<p>I've seen <tt class="docutils literal">typedef</tt> capabilities in languages in the past but had absolutely no idea why anyone would use them. After about 15 minutes with C++, I now know exactly why. I had to create a couple of type aliases to make the <tt class="docutils literal">funcMap</tt> returning functions nice to read.</p>
+<div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">NoArgsFunc</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">ArrayArgsFunc</span><span class="p">)(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">args</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">NoArgsFunc</span><span class="o">&gt;</span> <span class="n">NoArgsMap</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">map</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">,</span> <span class="n">ArrayArgsFunc</span><span class="o">&gt;</span> <span class="n">ArrayArgsMap</span><span class="p">;</span>
+</pre></div>
+<p>The first two here are pointers to the two types of function which I will be using, and the last two are the maps which will hold them.</p>
+<p>Now I could use them to create functions which return the maps.</p>
+<div class="highlight"><pre><span></span><span class="n">NoArgsMap</span> <span class="nf">buildNoArgsFuncMap</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">NoArgsMap</span> <span class="n">funcMap</span><span class="p">;</span>
+    <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;origin&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;oriign&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">origin</span><span class="p">;</span>
+    <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;stat&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">stat</span><span class="p">;</span>
+    <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;stt&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;satt&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;stat&quot;</span><span class="p">];</span>
+    <span class="n">funcMap</span><span class="p">[</span><span class="s">&quot;branch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">branch</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="n">funcMap</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="n">ArrayArgsMap</span> <span class="nf">buildArrayArgsFuncMap</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">ArrayArgsMap</span> <span class="n">arrayArgsFuncMap</span><span class="p">;</span>
+    <span class="n">arrayArgsFuncMap</span><span class="p">[</span><span class="s">&quot;cm&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">cm</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="n">arrayArgsFuncMap</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<p>Aliasing misspellings of commands which I regularly get wrong was just as easy as in a switch statement.</p>
+<p>With this in place, I first tackled the function which would get the branch name from git. This got split into three functions for simplicity.</p>
+<div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nf">getOutput</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">cmd</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">array</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="mi">128</span><span class="o">&gt;</span> <span class="n">buffer</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">result</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="kt">FILE</span><span class="p">,</span> <span class="k">decltype</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pclose</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">pipe</span><span class="p">(</span><span class="n">popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="s">&quot;r&quot;</span><span class="p">),</span> <span class="n">pclose</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pipe</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">throw</span> <span class="n">std</span><span class="o">::</span><span class="n">runtime_error</span><span class="p">(</span><span class="s">&quot;popen() failed!&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">buffer</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">buffer</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">pipe</span><span class="p">.</span><span class="n">get</span><span class="p">())</span> <span class="o">!=</span> <span class="k">nullptr</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">result</span> <span class="o">+=</span> <span class="n">buffer</span><span class="p">.</span><span class="n">data</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nf">getBranchName</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">statusCommand</span> <span class="o">=</span> <span class="s">&quot;git status&quot;</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="n">statusOutput</span> <span class="o">=</span> <span class="n">getOutput</span><span class="p">(</span><span class="n">statusCommand</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">outputStream</span><span class="p">(</span><span class="n">statusOutput</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">firstLine</span><span class="p">;</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">getline</span><span class="p">(</span><span class="n">outputStream</span><span class="p">,</span> <span class="n">firstLine</span><span class="p">);</span>
+
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">branchName</span> <span class="o">=</span> <span class="n">firstLine</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="n">firstLine</span><span class="p">.</span><span class="n">find_last_of</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">branchName</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">branch</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">getBranchName</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+<p><tt class="docutils literal">getOutput</tt> was shamelessly stolen from <a class="reference external" href="https://stackoverflow.com/questions/478898/how-do-i-execute-a-command-and-get-output-of-command-within-c-using-posix">this stackoverflow question</a>, since it's not something I would ever have been able to figure out by myself.</p>
+<p><tt class="docutils literal">getBranchName</tt> grabs the output of <tt class="docutils literal">git status</tt> and splits off the first line, then splits off the last word. This is the current branch name. I must say, converting a string to a stream in order to get the first line from it is not something I've encountered before.</p>
+<p>With <tt class="docutils literal">branch</tt> written, <tt class="docutils literal">origin</tt> and <tt class="docutils literal">stat</tt> are trivial thanks to <tt class="docutils literal"><span class="pre">std::system</span></tt>.</p>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">origin</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">gitCommand</span> <span class="o">=</span> <span class="s">&quot;git push origin &quot;</span> <span class="o">+</span> <span class="n">getBranchName</span><span class="p">();</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">system</span><span class="p">(</span><span class="n">gitCommand</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">stat</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">system</span><span class="p">(</span><span class="s">&quot;git status&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+<p>I know how to split a string to an iterable, but now I had to do the reverse to write the <tt class="docutils literal">cm</tt> function:</p>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">cm</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="k">const</span> <span class="n">delim</span> <span class="o">=</span> <span class="s">&quot; &quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">ostringstream</span> <span class="n">imploded</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">copy</span><span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">args</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">std</span><span class="o">::</span><span class="n">ostream_iterator</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="p">(</span><span class="n">imploded</span><span class="p">,</span> <span class="n">delim</span><span class="p">));</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">commitMessage</span> <span class="o">=</span>  <span class="n">imploded</span><span class="p">.</span><span class="n">str</span><span class="p">();</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">commitCommand</span> <span class="o">=</span> <span class="s">&quot;git commit -m &#39;&quot;</span> <span class="o">+</span> <span class="n">commitMessage</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">system</span><span class="p">(</span><span class="n">commitCommand</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="p">}</span>
+</pre></div>
+<p>Again, the hard part of this is stolen from <a class="reference external" href="https://stackoverflow.com/questions/5689003/how-to-implode-a-vector-of-strings-into-a-string-the-elegant-way">stackoverflow</a>. Imploding the vector into a string and passing it to <tt class="docutils literal"><span class="pre">std::system</span></tt> was easy enough.</p>
+<p>Last thing to do is <tt class="docutils literal">usage</tt>. Since this is the same thing every time, I may not show this in future languages.</p>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">usage</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Use it properly!&quot;</span><span class="p">;</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<p>And with that the C++ version is complete. While there were a couple of things which I would not have been able to figure out without stackoverflow, I think that's a problem for any language. It also showcased the large-community aspect of C++ which I mentioned earlier, and has proven how valuable it is when learning a language.
+Overall, I definitely didn't hate the language.</p>
+</div>
+<div class="section" id="id3">
+<h3>D</h3>
+<p>Unlike C++, D supports <tt class="docutils literal">switch</tt> ing on a string. The <tt class="docutils literal">main</tt> function also does not have to return an integer. This made the main engine very simple:</p>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="nb">string</span><span class="p">[]</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">argv</span><span class="p">.</span><span class="n">length</span> <span class="p">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">usage</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">auto</span> <span class="n">command</span> <span class="p">=</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">command</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="s">&quot;stat&quot;</span><span class="p">,</span> <span class="s">&quot;stt&quot;</span><span class="p">:</span>
+            <span class="n">stat</span><span class="p">();</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="s">&quot;branch&quot;</span><span class="p">:</span>
+            <span class="n">writeln</span><span class="p">(</span><span class="n">getBranchName</span><span class="p">());</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="s">&quot;origin&quot;</span><span class="p">:</span>
+            <span class="n">origin</span><span class="p">();</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="s">&quot;cm&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">argv</span><span class="p">.</span><span class="n">length</span> <span class="p">&gt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">cm</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span> <span class="p">..</span> <span class="p">$]);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="k">goto</span> <span class="k">default</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">default</span><span class="p">:</span>
+            <span class="n">usage</span><span class="p">();</span>
+            <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<p>A nice feature I found was <tt class="docutils literal">goto default</tt>. This means that if I were to change the default behaviour in the future, I would not have to find multiple cases of <tt class="docutils literal"><span class="pre">usage();</span></tt> to replace.</p>
+<p>When it came to getting the branch name I found a way of spawning a background process and waiting for its output. It's very readable, much moreso than c++'s way.</p>
+<div class="highlight"><pre><span></span><span class="nb">string</span> <span class="n">getBranchName</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">pipes</span> <span class="p">=</span> <span class="n">pipeProcess</span><span class="p">([</span><span class="s">&quot;git&quot;</span><span class="p">,</span> <span class="s">&quot;status&quot;</span><span class="p">],</span> <span class="n">Redirect</span><span class="p">.</span><span class="n">stdout</span> <span class="p">|</span> <span class="n">Redirect</span><span class="p">.</span><span class="n">stderr</span><span class="p">);</span>
+    <span class="k">scope</span><span class="p">(</span><span class="n">exit</span><span class="p">)</span> <span class="n">wait</span><span class="p">(</span><span class="n">pipes</span><span class="p">.</span><span class="n">pid</span><span class="p">);</span>
+
+    <span class="nb">string</span> <span class="n">output</span> <span class="p">=</span> <span class="n">strip</span><span class="p">(</span><span class="n">pipes</span><span class="p">.</span><span class="n">stdout</span><span class="p">.</span><span class="n">readln</span><span class="p">());</span>
+    <span class="nb">string</span> <span class="n">branchName</span> <span class="p">=</span> <span class="n">output</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">)[$-</span><span class="mi">1</span><span class="p">];</span>
+
+    <span class="k">return</span> <span class="n">branchName</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<p>An interesting feature of D is the <tt class="docutils literal">$</tt> alias. This is used in indexing to be the length of something - which is why I use <tt class="docutils literal"><span class="pre">[$-1]</span></tt> to access the last element of the <tt class="docutils literal">output</tt> here, and above in <tt class="docutils literal">main</tt> I can use <tt class="docutils literal"><span class="pre">[2..$]</span></tt> to slice to the end of <tt class="docutils literal">argv</tt>.</p>
+<p>Now <tt class="docutils literal">stat</tt> and <tt class="docutils literal">origin</tt> are again very simple:</p>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">stat</span><span class="p">(){</span>
+    <span class="k">auto</span> <span class="n">pid</span> <span class="p">=</span> <span class="n">spawnProcess</span><span class="p">([</span><span class="s">&quot;git&quot;</span><span class="p">,</span> <span class="s">&quot;status&quot;</span><span class="p">]);</span>
+    <span class="k">scope</span><span class="p">(</span><span class="n">exit</span><span class="p">)</span> <span class="n">wait</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">origin</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nb">string</span> <span class="n">branch</span> <span class="p">=</span> <span class="n">getBranchName</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">command</span> <span class="p">=</span> <span class="p">[</span><span class="s">&quot;git&quot;</span><span class="p">,</span> <span class="s">&quot;push&quot;</span><span class="p">,</span> <span class="s">&quot;origin&quot;</span><span class="p">,</span> <span class="n">branch</span><span class="p">];</span>
+
+    <span class="k">auto</span> <span class="n">pid</span> <span class="p">=</span> <span class="n">spawnProcess</span><span class="p">(</span><span class="n">command</span><span class="p">);</span>
+    <span class="k">scope</span><span class="p">(</span><span class="n">exit</span><span class="p">)</span> <span class="n">wait</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+<p>For <tt class="docutils literal">cm</tt> I found an easier way to cope with the need for speech marks surrounding the <tt class="docutils literal"><span class="pre">-m</span></tt> flag. Instead of using <tt class="docutils literal">pipeProcess</tt> D has <tt class="docutils literal">spawnShell</tt> which functions much like <tt class="docutils literal">system</tt>.</p>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">cm</span><span class="p">(</span><span class="nb">string</span><span class="p">[]</span> <span class="n">messagePieces</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">commitMessage</span> <span class="p">=</span> <span class="n">join</span><span class="p">(</span><span class="n">messagePieces</span><span class="p">,</span> <span class="s">&quot; &quot;</span><span class="p">);</span>
+    <span class="nb">string</span> <span class="n">command</span> <span class="p">=</span> <span class="s">&quot;git commit -m &#39;%s&#39;&quot;</span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="n">commitMessage</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="n">pid</span> <span class="p">=</span> <span class="n">spawnShell</span><span class="p">(</span><span class="n">command</span><span class="p">);</span>
+    <span class="n">wait</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+<p>Imploding an array to a single string is also much easier than in C++, with the provided <tt class="docutils literal">join</tt> method.</p>
+<p>Overall, D was a much easier and significantly quicker experience than C++. What is lacks in community size, it makes up for with very detailed documentation. Nothing was more than a couple of searches away.</p>
+</div>
+<div class="section" id="id4">
+<h3>Nim</h3>
+<p>The first thing which stood out to me when writing in Nim was the default vim's lack of inbuilt syntax highlighting. I'm used to full-blown semantic highlighting, so coding a colour-free terminal was a tad daunting.</p>
+<p>Despite this, Nim was an absolute joy to write, and definitely the quickest. Much like when writing gdscript, I find myself writing python and forgetting that it needs a keyword to declare variables.</p>
+<p>Unlike any other compiled language I tried, nim does not require a <tt class="docutils literal">main</tt> function. For a proper application, I would probably still write one and call it, but in this instance I didn't bother.</p>
+<div class="highlight"><pre><span></span><span class="k">let</span> <span class="n">arguments</span> <span class="o">=</span> <span class="n">commandLineParams</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">arguments</span><span class="p">.</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">case</span> <span class="n">arguments</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="p">:</span>
+        <span class="k">of</span> <span class="s">&quot;cm&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arguments</span><span class="p">.</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">commit</span><span class="p">(</span><span class="n">arguments</span><span class="o">[</span><span class="mf">1</span><span class="p">..</span><span class="o">&lt;</span><span class="n">arguments</span><span class="p">.</span><span class="n">len</span><span class="o">]</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">usage</span><span class="p">()</span>
+        <span class="k">of</span> <span class="s">&quot;branch&quot;</span><span class="p">:</span>
+            <span class="n">branch</span><span class="p">()</span>
+        <span class="k">of</span> <span class="s">&quot;origin&quot;</span><span class="p">:</span>
+            <span class="n">origin</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">usage</span><span class="p">()</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">usage</span><span class="p">()</span>
+</pre></div>
+<p>Unusual thing to note here is that <tt class="docutils literal">commandLineParams</tt> doesn't pull in the binary name, so we <tt class="docutils literal">switch</tt> on <tt class="docutils literal">[0]</tt> instead of the usual <tt class="docutils literal">[1]</tt>.</p>
+<p>Getting the branch name was absurdly simple.</p>
+<div class="highlight"><pre><span></span><span class="k">proc </span><span class="nf">getBranchName</span><span class="p">():</span> <span class="kt">string</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="n">statusOutput</span> <span class="o">=</span> <span class="n">execProcess</span><span class="p">(</span><span class="s">&quot;git status&quot;</span><span class="p">)</span>
+    <span class="k">let</span> <span class="n">firstLine</span> <span class="o">=</span> <span class="n">statusOutput</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+    <span class="k">let</span> <span class="n">branchName</span> <span class="o">=</span> <span class="n">firstLine</span><span class="p">.</span><span class="n">split</span><span class="p">()</span><span class="o">[</span><span class="p">^</span><span class="mi">1</span><span class="o">]</span>
+
+    <span class="k">return</span> <span class="n">branchName</span>
+
+<span class="k">proc </span><span class="nf">branch</span><span class="p">():</span> <span class="n">void</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="n">branchName</span> <span class="o">=</span> <span class="n">getBranchName</span><span class="p">()</span>
+    <span class="n">echo</span> <span class="n">branchName</span>
+</pre></div>
+<p>The <tt class="docutils literal">execProcess</tt> procedure returns stdout as a string, so it can be split and indexed just like one would imagine in python. The branch name is then grabbed off of the end, with <tt class="docutils literal">[^1]</tt> being the equivolent of <tt class="docutils literal"><span class="pre">[-1]</span></tt> in python.</p>
+<p>I didn't write <tt class="docutils literal">stat</tt>, but <tt class="docutils literal">origin</tt> was just as easy.</p>
+<div class="highlight"><pre><span></span><span class="k">proc </span><span class="nf">origin</span><span class="p">():</span> <span class="n">void</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="n">command</span> <span class="o">=</span> <span class="s">&quot;git push origin &quot;</span> <span class="o">&amp;</span> <span class="n">getBranchName</span><span class="p">()</span>
+    <span class="k">discard</span> <span class="n">execCmd</span> <span class="n">command</span>
+</pre></div>
+<p>If you do not want to use a return value in Nim, it must be manually <tt class="docutils literal">discard</tt> ed. Also, string concatenation is done with <tt class="docutils literal">&amp;</tt>. This is strange but not really a bother.</p>
+<p>Finally, <tt class="docutils literal">cm</tt> was as easy as you may be imagining:</p>
+<div class="highlight"><pre><span></span><span class="k">proc </span><span class="nf">commit</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="kt">seq</span><span class="o">[</span><span class="kt">string</span><span class="o">]</span><span class="p">):</span> <span class="n">void</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="n">command</span> <span class="o">=</span> <span class="s">&quot;git commit -m &#39;&quot;</span> <span class="o">&amp;</span> <span class="n">args</span><span class="p">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="s">&quot;&#39;&quot;</span>
+    <span class="k">discard</span> <span class="n">execCmd</span> <span class="n">command</span>
+</pre></div>
+<p>A <tt class="docutils literal">seq[string]</tt> is an non-length-specified array. The rest should be perfectly readable.</p>
+<p>Overall, nim is fantastic to work in. Both docs and beginner-walkthrough were excellent.</p>
+</div>
+<div class="section" id="id5">
+<h3>Rust</h3>
+<p>I gave up on Rust. It was definitely the most frustrating experience I've had with coding in a long while, and it's very obvious I'm not going to continue with it when there are other options available.</p>
+<div class="highlight"><pre><span></span><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">args</span>: <span class="nb">Vec</span><span class="o">&lt;</span><span class="nb">String</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">env</span>::<span class="n">args</span><span class="p">().</span><span class="n">collect</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">args</span><span class="p">.</span><span class="n">len</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">usage</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">as_ref</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="s">&quot;cm&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="n">args</span><span class="p">.</span><span class="n">len</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                    </span><span class="n">cm</span><span class="p">(</span><span class="o">&amp;</span><span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="o">..</span><span class="n">args</span><span class="p">.</span><span class="n">len</span><span class="p">()]);</span><span class="w"></span>
+<span class="w">                </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                    </span><span class="n">usage</span><span class="p">();</span><span class="w"></span>
+<span class="w">                </span><span class="p">}</span><span class="w"></span>
+<span class="w">            </span><span class="p">},</span><span class="w"></span>
+<span class="w">            </span><span class="s">&quot;branch&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                </span><span class="n">get_branch_name</span><span class="p">();</span><span class="w"></span>
+<span class="w">            </span><span class="p">},</span><span class="w"></span>
+<span class="w">            </span><span class="s">&quot;origin&quot;</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                </span><span class="n">origin</span><span class="p">();</span><span class="w"></span>
+<span class="w">            </span><span class="p">},</span><span class="w"></span>
+<span class="w">            </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">usage</span><span class="p">(),</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+<p>A switch statement is called a <tt class="docutils literal">match</tt> in rust. Since there are multiple different types of string, you have to use <tt class="docutils literal">as_ref</tt> to match with one.</p>
+<p>Getting the output of a system command took <em>ages</em>. Now that I have it written out it all makes perfect sense, but building up these functions and getting them to work was a long and laborious process.</p>
+<div class="highlight"><pre><span></span><span class="k">fn</span> <span class="nf">run_command</span><span class="p">(</span><span class="n">cmd_to_run</span>: <span class="nc">std</span>::<span class="n">string</span>::<span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">args_for_cmd</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">])</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">result</span>::<span class="nb">Result</span><span class="o">&lt;</span><span class="n">std</span>::<span class="n">process</span>::<span class="n">Output</span><span class="p">,</span><span class="w"> </span><span class="n">std</span>::<span class="n">io</span>::<span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Command</span>::<span class="n">new</span><span class="p">(</span><span class="n">cmd_to_run</span><span class="p">)</span><span class="w"></span>
+<span class="w">                        </span><span class="p">.</span><span class="n">args</span><span class="p">(</span><span class="n">args_for_cmd</span><span class="p">)</span><span class="w"></span>
+<span class="w">                        </span><span class="p">.</span><span class="n">output</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">output</span><span class="p">;</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="k">fn</span> <span class="nf">get_command_output</span><span class="p">(</span><span class="n">cmd_to_run</span>: <span class="nc">std</span>::<span class="n">string</span>::<span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="n">args_for_cmd</span>: <span class="kp">&amp;</span><span class="p">[</span><span class="o">&amp;</span><span class="kt">str</span><span class="p">])</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">string</span>::<span class="nb">String</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">run_command</span><span class="p">(</span><span class="n">cmd_to_run</span><span class="p">,</span><span class="w"> </span><span class="n">args_for_cmd</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">output</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="nb">Ok</span><span class="p">(</span><span class="n">o</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">output_results</span>: <span class="nc">std</span>::<span class="n">string</span>::<span class="nb">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">String</span>::<span class="n">from_utf8_lossy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">o</span><span class="p">.</span><span class="n">stdout</span><span class="p">).</span><span class="n">to_owned</span><span class="p">().</span><span class="n">to_string</span><span class="p">();</span><span class="w"></span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">output_results</span><span class="p">;</span><span class="w"></span>
+<span class="w">        </span><span class="p">},</span><span class="w"></span>
+<span class="w">        </span><span class="nb">Err</span><span class="p">(</span><span class="n">_</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s">&quot;fail&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="k">fn</span> <span class="nf">get_branch_name</span><span class="p">()</span><span class="w"> </span>-&gt; <span class="nc">std</span>::<span class="n">string</span>::<span class="nb">String</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="fm">vec!</span><span class="p">[</span><span class="s">&quot;status&quot;</span><span class="p">];</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">status_output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">get_command_output</span><span class="p">(</span><span class="s">&quot;git&quot;</span><span class="p">.</span><span class="n">to_string</span><span class="p">(),</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">as_slice</span><span class="p">());</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">first_line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">status_output</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">).</span><span class="n">collect</span>::<span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;&gt;</span><span class="p">()[</span><span class="mi">0</span><span class="p">];</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">pieces</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">first_line</span><span class="p">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot; &quot;</span><span class="p">).</span><span class="n">collect</span>::<span class="o">&lt;</span><span class="nb">Vec</span><span class="o">&lt;&amp;</span><span class="kt">str</span><span class="o">&gt;&gt;</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">branch_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pieces</span><span class="p">[</span><span class="n">pieces</span><span class="p">.</span><span class="n">len</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">branch_name</span><span class="p">.</span><span class="n">to_string</span><span class="p">();</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+<p>Since a function which throws an exception can return nothing, it's not possible to return a string from code which runs a command. This mandated it be in its own function, which I suppose is a good thing (as long as you know the reason, which I did not for a while).</p>
+<p>I really don't understand the string-wrangling that goes on in rust, so I never actually know how a string is supposed to be until the compiler tells me.</p>
+<p>I did, however, learn that there is a <tt class="docutils literal">Cow</tt> type in rust. That's pretty cool, I guess.</p>
+<p>I gave up at this point. I don't like rust.</p>
+</div>
+<div class="section" id="id6">
+<h3>Go</h3>
+<p>Go is weird. I don't like the capital letters for method names convention. Regardless, the <tt class="docutils literal">switch</tt> statement wasn't particularly difficult to get up and running by now.</p>
+<div class="highlight"><pre><span></span><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">switch</span> <span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="s">&quot;stat&quot;</span><span class="p">:</span>
+                <span class="nx">stat</span><span class="p">();</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s">&quot;branch&quot;</span><span class="p">:</span>
+                <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">getBranchName</span><span class="p">());</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s">&quot;cm&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">cm</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Args</span><span class="p">[</span><span class="mi">2</span><span class="p">:]);</span>
+                    <span class="k">return</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="k">default</span><span class="p">:</span>
+                <span class="nx">usage</span><span class="p">();</span>
+                <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">usage</span><span class="p">();</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<p>Getting the branch name proved fairly trivial, so I thought Go was looking good.</p>
+<div class="highlight"><pre><span></span><span class="kd">func</span> <span class="nx">getBranchName</span><span class="p">()</span> <span class="kt">string</span> <span class="p">{</span>
+    <span class="nx">out</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">exec</span><span class="p">.</span><span class="nx">Command</span><span class="p">(</span><span class="s">&quot;git&quot;</span><span class="p">,</span> <span class="s">&quot;status&quot;</span><span class="p">).</span><span class="nx">Output</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nx">lines</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Split</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">out</span><span class="p">),</span> <span class="s">&quot;\n&quot;</span><span class="p">);</span>
+    <span class="nx">pieces</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Split</span><span class="p">(</span><span class="nx">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&quot; &quot;</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">pieces</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">pieces</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">pieces</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="s">&quot;&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<p>Again, <tt class="docutils literal">stat</tt> and <tt class="docutils literal">origin</tt> were quite easy to implement:</p>
+<div class="highlight"><pre><span></span><span class="kd">func</span> <span class="nx">stat</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">out</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">exec</span><span class="p">.</span><span class="nx">Command</span><span class="p">(</span><span class="s">&quot;git&quot;</span><span class="p">,</span> <span class="s">&quot;status&quot;</span><span class="p">).</span><span class="nx">Output</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="nx">out</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">origin</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">branch</span> <span class="o">:=</span> <span class="nx">getBranchName</span><span class="p">();</span>
+    <span class="nx">out</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">exec</span><span class="p">.</span><span class="nx">Command</span><span class="p">(</span><span class="s">&quot;git&quot;</span><span class="p">,</span> <span class="s">&quot;push&quot;</span><span class="p">,</span> <span class="s">&quot;origin&quot;</span><span class="p">,</span> <span class="nx">branch</span><span class="p">).</span><span class="nx">Output</span><span class="p">();</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="nx">out</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+<p>Trying to implement <tt class="docutils literal">cm</tt> however, had me stumped. I couldn't get it to recognise the <tt class="docutils literal"><span class="pre">-m</span></tt> flag with the speech marks, and there is NO helpful output at all, just &quot;exit code 1&quot;;</p>
+<p>My colleague who loves Go eventually helped me get <tt class="docutils literal">cm</tt> working. It turned out that the commit message needed to be a single argument:</p>
+<div class="highlight"><pre><span></span><span class="kd">func</span> <span class="nx">cm</span><span class="p">(</span><span class="nx">args</span> <span class="p">[]</span><span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">message_args</span> <span class="p">[]</span><span class="kt">string</span><span class="p">;</span>
+  <span class="nx">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">=</span> <span class="s">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="nx">args</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">arg</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">args</span> <span class="p">{</span>
+      <span class="nx">message_args</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">message_args</span><span class="p">,</span> <span class="nx">arg</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="nx">message_args</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">message_args</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">=</span> <span class="nx">message_args</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">message_args</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span><span class="p">;</span>
+  <span class="nx">full_cmd</span> <span class="o">:=</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">Join</span><span class="p">(</span><span class="nx">message_args</span><span class="p">,</span> <span class="s">&quot; &quot;</span><span class="p">);</span>
+  <span class="nx">cmd</span> <span class="o">:=</span> <span class="nx">exec</span><span class="p">.</span><span class="nx">Command</span><span class="p">(</span><span class="s">&quot;git&quot;</span><span class="p">,</span><span class="s">&quot;commit&quot;</span><span class="p">,</span> <span class="s">&quot;-m&quot;</span><span class="p">,</span> <span class="nx">full_cmd</span><span class="p">);</span>
+  <span class="nx">out</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">cmd</span><span class="p">.</span><span class="nx">Output</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;error&quot;</span><span class="p">);</span>
+      <span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span> <span class="nx">out</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+<p>That's it. I have now written (or at least, attempted to write) a git helper replacement in five compiled languages.</p>
+</div>
+<div class="section" id="final-thoughts">
+<h3>Final Thoughts</h3>
+<p>Nim and D are both fantastic. If I actually have a reason to use a compiled language for myself, I will be using one of them (probably Nim).</p>
+<p>If I need to do something which involves input from other people, I think I would be happy to go with C++. It was a strange experience, but I was still able to get the program built in a fairly small amount of time due to the wealth of existing information about it.</p>
+<p>Now I just need to think of a reason to use a new language!</p>
+</div>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

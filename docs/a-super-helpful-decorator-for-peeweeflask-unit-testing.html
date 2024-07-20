@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>A Super Helpful Decorator For Peewee/Flask Unit Testing</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/a-super-helpful-decorator-for-peeweeflask-unit-testing.html" rel="bookmark"
+           title="Permalink to A Super Helpful Decorator For Peewee/Flask Unit Testing">A Super Helpful Decorator For Peewee/Flask Unit Testing</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <div class="section" id="update">
+<h2>Update</h2>
+<p>As of peewee version 3, the <tt class="docutils literal">test_database</tt> context manager was removed, and models are instead bound to a new database via a <tt class="docutils literal">bind</tt> method.</p>
+<p>There is a comment by the author of Peewee <a class="reference external" href="https://github.com/coleifer/peewee/issues/1450">over on a github issue</a> providing a new way to achieve this.</p>
+<p>I have adapted this to look similar to the decorator I am used to.</p>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">with_test_db</span><span class="p">(</span><span class="n">dbs</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">test_db_closure</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">test_db</span> <span class="o">=</span> <span class="n">SqliteExtDatabase</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">test_db</span><span class="o">.</span><span class="n">bind_ctx</span><span class="p">(</span><span class="n">dbs</span><span class="p">):</span>
+                <span class="n">test_db</span><span class="o">.</span><span class="n">create_tables</span><span class="p">(</span><span class="n">dbs</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="n">test_db</span><span class="o">.</span><span class="n">drop_tables</span><span class="p">(</span><span class="n">dbs</span><span class="p">)</span>
+                    <span class="n">test_db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">test_db_closure</span>
+
+    <span class="k">return</span> <span class="n">decorator</span>
+</pre></div>
+<p>Replace the decorator function in the original article with this new one if you are following along with Peewee 3. Everything else will work the same.</p>
+</div>
+<div class="section" id="original-post">
+<h2>Original Post</h2>
+<p>When writing unit tests for a Flask/Peewee application, we will inevitably need to mock the database in order to test methods of our model classes.</p>
+<p>Playhouse defines a very easy and pythonic way to achieve this - a <tt class="docutils literal">test_database</tt> context manager. We can just wrap this around our test method to have it use an in-memory database instead of our actual one.</p>
+<p>This looks like so:</p>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_model_method</span><span class="p">():</span>
+    <span class="n">test_database</span> <span class="o">=</span> <span class="n">SqliteExtDatabase</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">test_database</span><span class="p">(</span><span class="n">test_database</span><span class="p">,</span> <span class="p">(</span><span class="n">MyModel</span><span class="p">,)):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">()</span><span class="o">.</span><span class="n">some_method</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">&quot;test&quot;</span>
+</pre></div>
+<p>However, defining our database and using the context manager around every test gets tedious. For this reason I have come up with a decorator which will help to tidy up any code which needs to access the mock database.</p>
+<p>For this code snippet, we will need some imports:</p>
+<blockquote>
+<ul class="simple">
+<li><tt class="docutils literal">test_database</tt> - the context manager which handles a testing instance of a peewee database</li>
+<li><tt class="docutils literal">wraps</tt> - for help with creating a decorator</li>
+<li><tt class="docutils literal">SqliteExtDatabase</tt> - for using some later features of SQLite</li>
+<li><tt class="docutils literal">JSONField</tt> - for JSON compatability</li>
+</ul>
+</blockquote>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">playhouse.sqlite_ext</span> <span class="kn">import</span> <span class="n">JSONField</span><span class="p">,</span> <span class="n">SqliteExtDatabase</span>
+<span class="kn">from</span> <span class="nn">playhouse.test_utils</span> <span class="kn">import</span> <span class="n">test_database</span>
+</pre></div>
+<p>We will use the <tt class="docutils literal">wraps</tt> decorator to create a decorator of our own. This will be responsible for creating the test database and wrapping the <tt class="docutils literal">test_database</tt> context manager around our unit test.</p>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">with_test_db</span><span class="p">(</span><span class="n">dbs</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">test_db_closure</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">test_db</span> <span class="o">=</span> <span class="n">SqliteExtDatabase</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">test_database</span><span class="p">(</span><span class="n">test_db</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dbs</span><span class="p">),</span> <span class="n">fail_silently</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">test_db_closure</span>
+
+    <span class="k">return</span> <span class="n">decorator</span>
+</pre></div>
+<p>Since most of our Python apps run with Postgres, I use the <tt class="docutils literal">SqliteExtDatabase</tt> to mock JSON storage. If you are not using JSON, feel free to use a regular <tt class="docutils literal">SqliteDatabase</tt>.</p>
+<p>With this done and imported, just use it in your unit test files like so:</p>
+<div class="highlight"><pre><span></span><span class="nd">@with_test_db</span><span class="p">((</span><span class="n">MyModel</span><span class="p">,))</span>
+<span class="k">def</span> <span class="nf">test_model_method</span><span class="p">():</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">MyModel</span><span class="p">()</span><span class="o">.</span><span class="n">some_method</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">&quot;test&quot;</span>
+</pre></div>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Update on using (neo)vim for python development</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/update-on-using-neovim-for-python-development.html" rel="bookmark"
+           title="Permalink to Update on using (neo)vim for python development">Update on using (neo)vim for python development</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>A while back I wrote a blog post about switching from JetBrains IDEs to vim. In that blog post I
+explained my rationale and went over my <tt class="docutils literal">vimrc</tt> file.</p>
+<p>Almost a year later, and I'm writing another blog post as I've switched editors again - sort of.</p>
+<div class="section" id="from-vim-to-neovim">
+<h2>From Vim to Neovim</h2>
+<p>So, why the switch? Mainly for one specific Plugin - <a class="reference external" href="https://github.com/neoclide/coc.nvim">Conquer of Completion</a></p>
+<p>This plugin describes itself as &quot;Intellisense for Neovim&quot;. It provides a myriad of useful
+features, but mainly autocomplete popups, and seamless integration with other fantastic addons
+to a text editor, such as emmet and jedi.</p>
+<p>While the <tt class="docutils literal">.vimrc</tt> file isn't <em>quite</em> just a copy-paste job to get neovim up to speed, enough
+of it was transferrable to make the switch pretty painless (especially compared to the JetBrains -&gt; Vim switch).</p>
+</div>
+<div class="section" id="my-new-init-vim">
+<h2>My new Init.vim</h2>
+<p>As I went over my <tt class="docutils literal">vimrc</tt> file in the last post, I suppose I should go over my <tt class="docutils literal">init.vim</tt> in this post.</p>
+<p>A lot of it ported straight over, so I'll mostly be going over the plugins I have to make neovim a pleasant
+IDE experience.</p>
+<div class="highlight"><pre><span></span>Plug <span class="s1">&#39;neoclide/coc.nvim&#39;</span><span class="p">,</span> {<span class="s1">&#39;branch&#39;</span>: <span class="s1">&#39;release&#39;</span>}
+Plug <span class="s1">&#39;Shougo/deoplete.nvim&#39;</span><span class="p">,</span> { <span class="s1">&#39;do&#39;</span>: <span class="s1">&#39;:UpdateRemotePlugins&#39;</span> }
+Plug <span class="s1">&#39;deoplete-plugins/deoplete-jedi&#39;</span>
+</pre></div>
+<p>First off, the aforementioned Coc, which enables the use of a language-server background, as well
+as linting and emmet support. Along with Coc comes Jedi, a must-have for python development. It acts
+as a language server and offers the ability to jump around the codebase and view definitions for functions
+as I write.</p>
+<div class="highlight"><pre><span></span>Plug <span class="s1">&#39;jaxbot/semantic-highlight.vim&#39;</span>
+Plug <span class="s1">&#39;cloudhead/neovim-fuzzy&#39;</span>
+Plug <span class="s1">&#39;mileszs/ack.vim&#39;</span>
+</pre></div>
+<p>This set of plugins carries over functionality which I got used to from my days using KDevelop to write PHP.</p>
+<p>Semantic highlighting was talked about in my previous post, and is something I cannot code without
+anymore.</p>
+<p>Fuzzy allows me to bring up a list of all files in the project folder with a shortcut - Ctrl+Q - and
+then do a fuzzy search. This allows me to quickly open a file, say <tt class="docutils literal">web/admin/templates/products/product_search_form.html</tt>
+by simply hitting Ctrl+Q and typing &quot;te/prosea&quot;. Functionality like this is invaluable for navigating
+quickly around a project.</p>
+<p>Ack, as mentioned before, is like a project-wide find.</p>
+<div class="highlight"><pre><span></span>Plug <span class="s1">&#39;ObserverOfTime/coloresque.vim&#39;</span>
+Plug <span class="s1">&#39;tpope/vim-surround&#39;</span>
+Plug <span class="s1">&#39;unblevable/quick-scope&#39;</span>
+</pre></div>
+<p>Coloresque highlights colour strings (like &quot;blue&quot; or &quot;#ff6600&quot;) with their colour, so that you can see
+at a glance what they are referring to.</p>
+<p>Surround allows me to surround some amount of text with quotes, brackets or html tags.</p>
+<p>Quickscope is something I don't get a huge amount of use from, but it is sometimes nice. It will highlight
+a character in all words on the cursor's current line with the quickest way to jump to that word.
+It's a bit hard to explain in text, so check out <a class="reference external" href="https://github.com/unblevable/quick-scope">the repo</a> for
+a graphical demonstration.</p>
+<div class="highlight"><pre><span></span>Plug <span class="s1">&#39;pangloss/vim-javascript&#39;</span>
+Plug <span class="s1">&#39;tpope/vim-fugitive&#39;</span>
+</pre></div>
+<p>Vim-javascript provides nicer syntax highlighting abilities for javascript files. Not much to explain there.</p>
+<p>Fugitive is a git integration which seems rather nice on paper. The problem is I'm much too used to quitting
+my editor and using git from the command line, so I don't use it as much as I would think I should.</p>
+</div>
+<div class="section" id="summary-of-my-experience">
+<h2>Summary of my experience</h2>
+<p>Now that I have the power of intellisense in neovim, I don't think there's anything at all that I could
+do with Pycharm, or any other graphical IDE, which I cannot find a way to do in neovim.</p>
+<p>If anyone is considering trying out vim, either to just learn the movement or as a way of abandoning
+a graphical IDE which takes like 10 minutes to start up and become usable, I would definitely say
+that Neovim and CoC is a perfectly-viable development experience for a web developer using mainly
+python.</p>
+<p>If you are using Pycharm at the moment, and want to ease the transition to vim, there's a plugin
+called IDEAVim which will allow you to use a subset of vim's movement controls within JetBrains IDEs.</p>
+</div>
+<div class="section" id="dotfiles">
+<h2>Dotfiles</h2>
+<p>You can find my <tt class="docutils literal">init.vim</tt> along with a bunch of other dotfiles <a class="reference external" href="https://github.com/Dvlv/dotfiles">over on github</a></p>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>A Beginner's Guide to Fedora Silverblue</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+    <h1 class="entry-title">A Beginner's Guide to Fedora Silverblue</h1>
+    
+    <hr>
+<div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#00-what-is-fedora-silverblue">0.0 What is Fedora Silverblue?</a><ul>
+<li><a href="#01-what-is-an-immutable-distro">0.1 What is an Immutable Distro?</a></li>
+<li><a href="#02-why-use-an-immutable-distro">0.2 Why use an Immutable Distro?</a></li>
+</ul>
+</li>
+<li><a href="#10-how-does-silverblue-achieve-immutability">1.0 How does Silverblue achieve Immutability?</a><ul>
+<li><a href="#11-what-is-ostree">1.1 What is ostree?</a></li>
+<li><a href="#12-what-is-rpm-ostree">1.2 What is rpm-ostree?</a></li>
+</ul>
+</li>
+<li><a href="#20-how-is-silverblue-different-from-workstation">2.0 How is Silverblue different from Workstation?</a><ul>
+<li><a href="#21-updating-silverblue-vs-workstation">2.1 Updating Silverblue vs Workstation</a></li>
+</ul>
+</li>
+<li><a href="#30-installing-software-on-silverblue">3.0 Installing Software on Silverblue</a><ul>
+<li><a href="#31-using-flatpak">3.1 Using Flatpak</a><ul>
+<li><a href="#311-gnome-software">3.1.1 Gnome Software</a></li>
+<li><a href="#312-the-flatpak-command">3.1.2 The flatpak command</a></li>
+</ul>
+</li>
+<li><a href="#32-layering-with-rpm-ostree">3.2 Layering with rpm-ostree</a><ul>
+<li><a href="#321-should-i-avoid-layering">3.2.1 Should I avoid layering?</a></li>
+</ul>
+</li>
+<li><a href="#33-toolboxes">3.3 Toolboxes</a><ul>
+<li><a href="#331-creating-and-using-a-toolbox">3.3.1 Creating and using a Toolbox</a></li>
+<li><a href="#332-when-should-i-use-a-toolbox">3.3.2 When should I use a Toolbox?</a></li>
+</ul>
+</li>
+<li><a href="#34-other-methods">3.4 Other Methods</a><ul>
+<li><a href="#341-appimage">3.4.1 AppImage</a></li>
+<li><a href="#342-snap">3.4.2 Snap</a></li>
+<li><a href="#343-rpms">3.4.3 RPMs</a></li>
+<li><a href="#344-arbitrary-scripts-tarballs">3.4.4 Arbitrary Scripts / Tarballs</a></li>
+<li><a href="#345-distrobox">3.4.5 Distrobox</a></li>
+<li><a href="#346-nix">3.4.6 Nix</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#40-updating-silverblue">4.0 Updating Silverblue</a><ul>
+<li><a href="#41-using-gnome-software">4.1 Using Gnome Software</a></li>
+<li><a href="#42-using-the-cli">4.2 Using the CLI</a></li>
+<li><a href="#43-updating-toolboxes">4.3 Updating Toolboxes</a></li>
+</ul>
+</li>
+<li><a href="#50-upgrading-silverblue-to-the-next-major-version">5.0 Upgrading Silverblue to the Next Major Version</a><ul>
+<li><a href="#51-using-gnome-software">5.1 Using Gnome Software</a></li>
+<li><a href="#52-using-the-cli">5.2 Using the CLI</a></li>
+<li><a href="#53-upgrading-toolboxes">5.3 Upgrading Toolboxes</a></li>
+</ul>
+</li>
+<li><a href="#60-faqs">6.0 FAQs</a><ul>
+<li><a href="#i-rebased-to-test-the-beta-do-i-need-to-do-anything-when-it-becomes-stable">I Rebased to test the Beta, do I need to do anything when it becomes stable?</a></li>
+<li><a href="#how-do-i-get-videos-to-play-in-firefox">How do I get videos to play in Firefox?</a></li>
+<li><a href="#how-do-i-edit-a-file-in-etc">How do I edit a file in /etc?</a></li>
+<li><a href="#how-do-i-install-something-without-rebooting">How do I install something without rebooting?</a></li>
+<li><a href="#how-do-i-keep-a-deployment-around-forever">How do I keep a deployment around forever?</a></li>
+<li><a href="#how-do-i-add-things-from-toolbox-into-my-menu">How do I add things from Toolbox into my menu?</a></li>
+<li><a href="#how-do-i-add-gnome-extensions">How do I add Gnome Extensions?</a></li>
+<li><a href="#how-do-i-get-the-nvidia-drivers-working">How do I get the Nvidia Drivers working?</a></li>
+</ul>
+</li>
+<li><a href="#glossary">Glossary</a></li>
+</ul>
+</div>
+<hr>
+<h2 id="00-what-is-fedora-silverblue">0.0 What is Fedora Silverblue?</h2>
+<p>Fedora Silverblue is a linux distribution very similar to Fedora Workstation, with the key difference of being an <em>Immutable Distro</em>.</p>
+<h3 id="01-what-is-an-immutable-distro">0.1 What is an Immutable Distro?</h3>
+<p>An Immutable Distro typically exhibits two key features:</p>
+<ul>
+<li>Certain (root-level) directories are mounted read-only, preventing the user of a running system from making any changes to them.</li>
+<li>At least one previous "version" of the system is kept, allowing the user to revert to a previous state.</li>
+</ul>
+<h3 id="02-why-use-an-immutable-distro">0.2 Why use an Immutable Distro?</h3>
+<p>The benefits of an Immutable Distro are twofold:</p>
+<ul>
+<li>
+<p>Consistency - When distros are released, the system is likely tested "as-is" to ensure it is working. It is unfeasible for the maintainers to then test every possible combination of packages and configurations on top of what's provided. Therefore, the "closer" your system is to the default, the more likely it is to be tested and working, and the more likely it is that you can find another person with a similar system to help with any problems you encounter.</p>
+</li>
+<li>
+<p>Rollbacks - It is very easy to roll back any update which you do not want, for example if a program stops working or its interface changes in a way you were not expecting, you can revert your system to <em>exactly</em> how it was before you updated.</p>
+</li>
+</ul>
+<h2 id="10-how-does-silverblue-achieve-immutability">1.0 How does Silverblue achieve Immutability?</h2>
+<p>Fedora Silverblue makes use of a technology called <code>ostree</code>, as well as a utility called <code>rpm-ostree</code>.</p>
+<h3 id="11-what-is-ostree">1.1 What is ostree?</h3>
+<p>OSTree is a tool which provides complete filesystems in a tree-like structure. It is similar in concept to <code>git</code>. The filesystem is often referred to as an "image", similar to container technologies. Acquiring a copy of an OSTree filesystem is known as "pulling". Each time you "pull" an "image" you are acquiring a complete and identical copy of the filesystem.</p>
+<p>There can be multiple different, independent filesystems hosted by the same entity. These are known as "branches". Switching between these branches is known as "rebasing", and is easy to do (and undo!).</p>
+<h3 id="12-what-is-rpm-ostree">1.2 What is rpm-ostree?</h3>
+<p><code>rpm-ostree</code> is a tool provided in Silverblue which allows a user to install RPM packages, including those from Fedora's repos, onto an OSTree system. This concept is known as "layering", as you can think of each additional RPM installed on top of Silverblue's OSTree image as adding a "layer" on top.</p>
+<p>Once an image is downloaded from OSTree and your layered packages are applied on top, the final product is available to boot into. This final product is known as a "deployment".</p>
+<h2 id="20-how-is-silverblue-different-from-workstation">2.0 How is Silverblue different from Workstation?</h2>
+<p>Silverblue's use of OSTree means software is installed differently, the system is updated differently, and there are different packages available out-of-the-box compared with Workstation. Examples include Gnome Boxes, RhythmBox and LibreOffice.</p>
+<p>As well as differences in included software, some of the applications which come with a Silverblue install are installed as Flatpaks, compared to being installed via the regular repos in Workstation. Some examples are Weather, Maps, Connections and File Roller.</p>
+<h3 id="21-updating-silverblue-vs-workstation">2.1 Updating Silverblue vs Workstation</h3>
+<p>Fedora Workstation updates using <code>dnf</code>. When you run <code>dnf update</code> individual RPM packages are fetched from Fedora's repo and each is installed separately. Notably, only software which has a higher version in the repos versus on your machine will be fetched and installed. Once installed, the newer versions of these packages are available on your running system right then-and-there.</p>
+<p>By contrast, Silverblue is updated using <code>rpm-ostree</code>. When called, this fetches the latest version of the entire OSTree image, then individually re-layers all of your layered RPMs on top of this "fresh" image. This new image is then saved <em>independently</em> of the image you are currently booted into. If this process fails for any reason, the OSTree image is not saved to disk, and your system will be the same as if you had not run the update at all. If the process succeeds, you will be able to boot into your new image by restarting or shutting down your machine (instantly-available installs / updates are possible, but more on that later; a reboot is needed by default).</p>
+<p>If you would like to undo an update on Workstation, <code>dnf</code> is called to download older versions of the packages which were previously updated, and these are then re-installed in-place on your running machine, overwriting the updated packages. If an update caused the machine to not boot, this can be tricky to deal with, possibly involving the use of a live USB.</p>
+<p>If you would like to undo an update on Silverblue, you can simply reboot and pick the previous image from GRUB. Since you will have been using this image to perform the update previously, you can be confident that this image will boot and function exactly as before the update.</p>
+<h2 id="30-installing-software-on-silverblue">3.0 Installing Software on Silverblue</h2>
+<p>There are three recommended ways to install software on Silverblue: </p>
+<ul>
+<li>Using Flatpak</li>
+<li>Layering via <code>rpm-ostree</code></li>
+<li>Installing into a Toolbox</li>
+</ul>
+<h3 id="31-using-flatpak">3.1 Using Flatpak</h3>
+<p>Flatpaks are applications built upon a consistent base-system independant of the user's distribution. They run in a sandbox, giving the user fine-grained control over certain permissions, such as network access or ability to see certain files / folders.</p>
+<p>By default, Fedora Silverblue comes with a number of flatpaks from Fedora's own flatpak repo. As of version 38, the Flathub repo is also enabled out-of-the-box, giving access to a very wide range of graphical applications.</p>
+<p>It is recommended to install graphical applications using <code>flatpak</code> where available, since they are independent of the base OSTree image. Since their dependencies are self-contained, they cannot cause any conflicts within the base system, and they can be updated independently (or even automatically!) without having to update the entire system.</p>
+<p>There are two ways to install Flatpak applications on Silverblue - either through the graphical Gnome Software application, or the CLI <code>flatpak</code> command.</p>
+<h4 id="311-gnome-software">3.1.1 Gnome Software</h4>
+<p>Open the application named "Software". On first launch, this may take a few minutes to scan for available applications. Once finished, you can use the magnifying glass in the top-left to search for what you want to install. Clicking on your selected application will then present you with more details about it, as well as an "Install" button in the top-right. Simply click this button to install the application. To uninstall something, click the trash can icon and confirm.</p>
+<p>When updates are available you should receive a notification from Gnome Software which will take you to its "Updates" section when clicked. You can then press "Update All" to update all of your flatpaks.</p>
+<h4 id="312-the-flatpak-command">3.1.2 The <code>flatpak</code> command</h4>
+<p>The <code>flatpak</code> command can both search for and install applications from both Fedora's and Flathub's repos. To search for Inkscape, simply run <code>flatpak search inkscape</code>. This will show you a list of results in a table. You will need to use the identifier in the "Application ID" column for installing and removing.</p>
+<p>To install with the <code>flatpak</code> command, run <code>flatpak install &lt;repo&gt; &lt;application_id&gt;</code>. For example, to install Inkscape from the Flathub repo execute: <code>flatpak install flathub org.inkscape.Inkscape</code>.</p>
+<p>Removing a flatpak is <code>flatpak remove &lt;application_id&gt;</code>, for example: <code>flatpak remove org.inkscape.Inkscape</code>. </p>
+<p>Updating your flatpaks is just <code>flatpak update</code>.</p>
+<h3 id="32-layering-with-rpm-ostree">3.2 Layering with <code>rpm-ostree</code></h3>
+<p>Anything which needs access to the base system, such as drivers, must be layered via <code>rpm-ostree</code>. </p>
+<p>CLI programs are not typically distributed by Flatpak, so these are also good candidates for being layered.</p>
+<p>At the time of writing there is no way to use <code>rpm-ostree</code> to search for available packages. You can instead either use the website <a href="https://packages.fedoraproject.org">packages.fedoraproject.org</a> or open up a Toolbox (more on that next) and search with <code>dnf search</code>.</p>
+<p>Installing a package is done by <code>rpm-ostree install packagename</code>, for example to layer Inkscape: <code>rpm-ostree install inkscape</code>.</p>
+<p>Removing a package is done by <code>rpm-ostree uninstall inkscape</code>.</p>
+<p>Installing and removing packages pulls the OSTree down again and layers any chosen RPMs on top to create a brand new deployment, just like an update would. This means you will need to reboot into your new deployment to use (or get rid of) packages installed / uninstalled.</p>
+<p>If you don't want to reboot, you can pass <code>--apply-live</code> or <code>-A</code> to the (un)install command to have them applied to the running system (a new deployment is still created, however). For example: <code>rpm-ostree install -A inkscape</code> will install Inkscape <em>and</em> make it available to use without a reboot.</p>
+<h4 id="321-should-i-avoid-layering">3.2.1 Should I avoid layering?</h4>
+<p>There is nothing necessarily <em>wrong</em> with layering packages - it's the whole point of including <code>rpm-ostree</code> in the first place. Packages in Fedora's repos are designed to be installed in tandem and are expected to play nicely together.</p>
+<p>The things to keep in mind are:</p>
+<ul>
+<li>The more packages you layer, the further you stray from the base OSTree image, making it possible that you run into problems that people who have not layered the same packages will not face. Bugs with dependency resolution do occasionally happen.</li>
+<li>As each update re-layers all of your RPMs from scratch, the more there is to install, the longer the updates will take. In practice this may not be a big deal at all, since you can keep using the system while it is being updated.</li>
+</ul>
+<p>Generally, if you are unable to get something by Flatpak, and you don't have any desire to mess around with toolboxes, then just layer it!</p>
+<h3 id="33-toolboxes">3.3 Toolboxes</h3>
+<p>A Toolbox (sometimes called Toolbx) is a Podman container of Fedora which is nicely integrated with the base system in a way that allows both graphical and CLI applications to execute (almost) as seamlessly as if they were installed on the base system. </p>
+<p>Toolboxes are great for developers, as they allow for installation of programming languages and tools with <code>dnf</code> just like Workstation, but with the bonus of having anything system-level isolated from both the host and from other Toolboxes. This means you can easily install, say, Python 3.8 in one Toolbox and Python 3.11 in another, without the need for a version-manager on your host.</p>
+<p>Graphical applications should typically Just Work™ from inside a toolbox, but be aware that they will not appear in your menu unless manually added. </p>
+<h4 id="331-creating-and-using-a-toolbox">3.3.1 Creating and using a Toolbox</h4>
+<p>Create a toolbox by executing <code>toolbox create name_of_my_toolbox</code>, where <code>name_of_my_toolbox</code> is an appropriate name for what you will be installing inside. By default this will create a container of the same version of Fedora as your base system. To use a different version, pass the <code>-r</code> flag followed by the version number, for example <code>toolbox create my_tbox -r 39</code> to create a container of Fedora 39.</p>
+<p>Enter a Toolbox with <code>toolbox enter name_of_my_toolbox</code>. You will now be in a shell inside your Toolbox. </p>
+<p>From inside the shell, you can use <code>dnf</code> as normal to install, update, and remove packages.</p>
+<p>To run a single command from inside a toolbox while on the main system, run <code>toolbox run -c name_of_my_toolbox application_name</code>. For example, if you have Inkscape inside a toolbox named <code>graphics</code>, run: <code>toolbox run -c graphics inkscape</code>.</p>
+<h4 id="332-when-should-i-use-a-toolbox">3.3.2 When should I use a Toolbox?</h4>
+<p>Tools which have a specific use-case with a small scope, such as versions of <code>npm</code> or <code>rustc</code> specific to a particular programming project, are good candidates for being installed in a Toolbox.</p>
+<p>Graphical applications which are not available as Flatpaks and will not layer with <code>rpm-ostree</code> for any reason (which sometimes happens with proprietary tools) could also be installed in a Toolbox. See the later section for tips on adding toolbox-installed applications to the system menu.</p>
+<h3 id="34-other-methods">3.4 Other Methods</h3>
+<p>The above should cover 99% of use-cases, but there may be situations where your chosen software is not available. Here are some other methods of installing applications:</p>
+<h4 id="341-appimage">3.4.1 AppImage</h4>
+<p>AppImages should work out-of-the-box on Silverblue.</p>
+<p>If you find you have an AppImage with a system-level dependency which is not met (such as VSCodium), it may prove more convenient to make this AppImage its own Toolbox, allowing you to use <code>dnf</code> to install these dependencies without affecting the base system. This AppImage will then need to be run from inside the Toolbox.</p>
+<h4 id="342-snap">3.4.2 Snap</h4>
+<p>Snaps do not work on Silverblue, due to <code>snapd</code>'s assumption that system-level directories such as <code>/snap</code> are writeable. Snaps will also not work in Toolbox or Distrobox containers. </p>
+<p>If you rely on software which is only available as a Snap, either use a Virtual Machine, or simply run a different, non-immutable distro.</p>
+<h4 id="343-rpms">3.4.3 RPMs</h4>
+<p>Some RPMs will install normally via <code>rpm-ostree install my_rpm_file.rpm</code>. Some may not, and require installing inside a Toolbox.</p>
+<h4 id="344-arbitrary-scripts-tarballs">3.4.4 Arbitrary Scripts / Tarballs</h4>
+<p>Certain directories which appear to be system-level on first glance are actually symlinks to <code>/var</code>, which is always writeable. This includes <code>/opt</code> and <code>/usr/local</code>.</p>
+<p>Binary files can be placed in <code>/opt</code> or <code>/usr/local</code>, and install-scripts which place files in these directories should work fine. </p>
+<p>If you'd prefer to install things at a user level, <code>~/bin</code> and <code>~/.local/bin</code> are good typical places.</p>
+<h4 id="345-distrobox">3.4.5 Distrobox</h4>
+<p>You can install Distrobox on Silverblue by layering it with <code>rpm-ostree</code> or following the <a href="https://github.com/89luca89/distrobox#curl-or-wget">Curl/Wget instructions</a> from Github. It should then function as-normal on Silverblue.</p>
+<h4 id="346-nix">3.4.6 Nix</h4>
+<p>It is technically possible to install and use Nix on Silverblue - but it involves some deeper changes to the system. A Gist is available <a href="https://gist.github.com/queeup/1666bc0a5558464817494037d612f094"> over on Github</a> for those who <em>really</em> need it.</p>
+<h2 id="40-updating-silverblue">4.0 Updating Silverblue</h2>
+<h3 id="41-using-gnome-software">4.1 Using Gnome Software</h3>
+<p>By default, Gnome Software should check for updates in the background while you are using your machine. This applies to both the base system and your flatpaks. When updates are available a notification will be displayed letting you know. </p>
+<p>The "Updates" tab at the top of the application will show the available updates, and there will be a button to apply them.</p>
+<h3 id="42-using-the-cli">4.2 Using the CLI</h3>
+<p>Run the command <code>rpm-ostree update</code> to update your base system. This will pull a fresh copy of the latest OSTree system and layer your RPMs on top, then create a new deployment for you to boot into when you next power your computer on.</p>
+<p>Run <code>flatpak update</code> to update all of your flatpak applications.</p>
+<h3 id="43-updating-toolboxes">4.3 Updating Toolboxes</h3>
+<p>Toolboxes are Fedora containers, so running <code>sudo dnf update</code> will upgrade a Toolbox. These are not currently handled by Gnome Software, so will need to be updated manually via the CLI.</p>
+<p>Note that Toolboxes cannot be upgraded from one major version to the next in the same way as Workstation. This is covered next.</p>
+<h2 id="50-upgrading-silverblue-to-the-next-major-version">5.0 Upgrading Silverblue to the Next Major Version</h2>
+<p>Neither Fedora Silverblue nor Workstation are "rolling" distros, they need to be manually upgraded to the next major version at the user's discretion.</p>
+<p>Upgrading to the next version in Silverblue involves pointing the system to a different "branch" of OSTree. This is referred to as "rebasing".</p>
+<h3 id="51-using-gnome-software">5.1 Using Gnome Software</h3>
+<p>If the Gnome Software settings are left as default it should prompt you when the next major release is available. Click the button on the prompt to have your system rebase in the background. Reboot when it is finished and you should have a new version available in the GRUB menu.</p>
+<h3 id="52-using-the-cli">5.2 Using the CLI</h3>
+<p>The command to search for available branches is <code>ostree remote refs fedora</code>. This should print out a list of possible rebase targets. The one you will want is likely called <code>fedora:fedora/XX/x86_64/silverblue</code> - where <code>XX</code> is the next major version number - for example <code>39</code>.</p>
+<p>The command to execute the rebase is: <code>rpm-ostree rebase &lt;target&gt;</code>. For example, to rebase to Silverblue version 39: <code>rpm-ostree rebase fedora:fedora/39/x86_64/silverblue</code></p>
+<p>Once this has run you should have a new deployment to boot into the next time you power on your computer.</p>
+<h3 id="53-upgrading-toolboxes">5.3 Upgrading Toolboxes</h3>
+<p>Upgrading Toolboxes is technically possible via <code>sudo dnf update --releasever=XX</code>, where <code>XX</code> is the next version number.</p>
+<p>However, it is typically recommended that, if possible, you create a new Toolbox and re-install your software inside of that.</p>
+<h2 id="60-faqs">6.0 FAQs</h2>
+<h3 id="i-rebased-to-test-the-beta-do-i-need-to-do-anything-when-it-becomes-stable">I Rebased to test the Beta, do I need to do anything when it becomes stable?</h3>
+<p>No, if you rebased to a branch <em>without</em> the word <code>testing</code> in, this branch will become the stable branch of the new version when it releases. Just carry on updating your system as normal.</p>
+<h3 id="how-do-i-get-videos-to-play-in-firefox">How do I get videos to play in Firefox?</h3>
+<p>At the time of writing, the system Firefox does not come with necessary media codecs to play all online videos. This is due to licensing / patent issues. </p>
+<p>The simplest fix is to use the Flathub version of Firefox. Install this by running <code>flatpak install flathub org.mozilla.firefox</code>. If you don't want two version of Firefox installed, you can remove the one from the OSTree image with <code>rpm-ostree override remove firefox firefox-langpacks</code>.</p>
+<p>If this is not an acceptable solution, you will need to add the RPMFusion repository. The <a href="https://rpmfusion.org/Configuration">official documentation</a> has instructions for Silverblue.</p>
+<p>Once you have followed this guide, it is then recommended to run <a href="https://discussion.fedoraproject.org/t/simplifying-updates-for-rpm-fusion-packages-and-other-packages-shipping-their-own-rpm-repos/30364?u=siosm">some further commands</a> to ensure your repo is version-agnostic, which simplifies rebases.</p>
+<p>With RPMFusion installed, install <code>ffmpeg</code> and/or <code>libavcodec-freeworld</code> to fix video playback.</p>
+<h3 id="how-do-i-edit-a-file-in-etc">How do I edit a file in /etc?</h3>
+<p>Both <code>/etc</code> and <code>/var</code> are always writeable. You can edit configuration files in <code>/etc</code> as normal!</p>
+<h3 id="how-do-i-install-something-without-rebooting">How do I install something without rebooting?</h3>
+<p>Pass <code>-A</code> or <code>--apply-live</code> to the install command, e.g. <code>rpm-ostree install -A inkscape</code>.</p>
+<h3 id="how-do-i-keep-a-deployment-around-forever">How do I keep a deployment around forever?</h3>
+<p>Pin your deployment with <code>sudo ostree admin pin 0</code>. When you no longer need it, <code>sudo ostree admin pin --unpin 2</code>. The numbers 0 and 2 refer to deployment indexes. To figure these out, run <code>rpm-ostree status</code> to list your available deployments. From the top down, the deployments are numbered starting from 0. For example, if you have three deployments available, the first one listed will be 0, the middle will be 1, and the bottom will be 2. </p>
+<p>If the deployment you are unpinning is not the third one down in this list, substitute the <code>2</code> from the unpin command with its index.</p>
+<h3 id="how-do-i-add-things-from-toolbox-into-my-menu">How do I add things from Toolbox into my menu?</h3>
+<p>There are multiple ways to achieve this:</p>
+<ul>
+<li>A flatpak called <a href="https://flathub.org/apps/org.bluesabre.MenuLibre">MenuLibre</a> will let you edit your menu.</li>
+<li>A <a href="https://github.com/Dvlv/toolbox-gui">graphical manager</a> for Toolboxes, written by me, features an "Add to Menu" button.</li>
+<li>A <a href="https://github.com/Dvlv/tb2dt">CLI tool</a>, written by me, allows for exporting of .desktop files from a toolbox.</li>
+</ul>
+<p>You can also do this manually, if you'd prefer:</p>
+<ul>
+<li>Search in <code>/usr/share/applications</code> for the <code>.desktop</code> file for the application you wish to export.</li>
+<li>Copy that to <code>~/.local/share/applications</code>.</li>
+<li>Edit that file and change any lines beginning with <code>Exec=</code> to run the command from inside the relevant toolbox.<ul>
+<li>For example, if the line is <code>Exec=inkscape</code> and your toolbox is <code>graphics</code>, change the line to <code>Exec=toolbox run -c graphics inkscape</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="how-do-i-add-gnome-extensions">How do I add Gnome Extensions?</h3>
+<p>You can either:</p>
+<ul>
+<li>Layer the extensions with <code>rpm-ostree</code>. You can search the Fedora repos for <code>gnome-shell-extension</code> to see what's available.</li>
+<li>Install the <a href="https://flathub.org/apps/com.mattjakeman.ExtensionManager">Extension Manager</a> flatpak, and use it to find and install extensions.</li>
+</ul>
+<h3 id="how-do-i-get-the-nvidia-drivers-working">How do I get the Nvidia Drivers working?</h3>
+<p>First you will need to add the RPMFusion Repo. The <a href="https://rpmfusion.org/Configuration">official documentation</a> has instructions for Silverblue.</p>
+<p>Once you have followed this guide, it is then recommended to run <a href="https://discussion.fedoraproject.org/t/simplifying-updates-for-rpm-fusion-packages-and-other-packages-shipping-their-own-rpm-repos/30364?u=siosm">some further commands</a> to ensure your repo is version-agnostic, which simplifies rebases.</p>
+<p>Now you can follow the <a href="https://rpmfusion.org/Howto/NVIDIA#Silverblue">instructions on RPMFusion's website</a>.</p>
+<hr>
+<h2 id="glossary">Glossary</h2>
+<ul>
+<li><strong>Branch</strong> -&gt; An individual, separate, OSTree filesystem. </li>
+<li><strong>Flatpak</strong> -&gt; A tool used to install independent, sandboxed applications (typically Graphical) on top of a Linux system.</li>
+<li><strong>Deployment</strong> -&gt; An OSTree image with your layered packages installed on top, ready to boot into from GRUB.</li>
+<li><strong>GRUB</strong> -&gt; The menu that appears upon booting your machine containing the available deployments to boot into.</li>
+<li><strong>Image</strong> -&gt; A full filesystem pulled from an OSTree repo.</li>
+<li><strong>Immutable Distro</strong> -&gt; A distribution which has certain system-level folders mounted read-only, and a way to access older versions of the system without affecting the current, running version.</li>
+<li><strong>Layer</strong> / <strong>layering</strong> -&gt; An RPM package installed via <code>rpm-ostree</code> on top of the base system.</li>
+<li><strong>Pinning/Unpinning</strong> -&gt; The commands for keeping a particular deployment saved to your machine indefinitely, until it is manually unpinned.</li>
+<li><strong>Pulling</strong> -&gt; Fetching the latest version of the OSTree filesystem.</li>
+<li><strong>Rebasing</strong> -&gt; Swapping the OSTree branch your machine pulls from, allowing you to switch to another desktop (Kinoite / Sericea) or to upgrade to the next major version.</li>
+<li><strong>Toolbox</strong> -&gt; A Fedora container which is integrated with the base-system to allow easy running of both CLI and Graphical applications</li>
+<li><strong>ostree</strong> -&gt; A technology providing complete, bootable filesystems to act as the base of an operating system.</li>
+<li><strong>rpm-ostree</strong> -&gt; The tool used to layer additional packages on top of the base system.</li>
+</ul>
+<hr>
+<p>This guide is released under the CC-0 Creative Commons licence. You are free to reproduce and redistribute as much of it as you'd like.</p>
+<p>Last updated: <strong>2023-04-29</strong></p>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Front End Frameworks 3 - Vue</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/front-end-frameworks-3-vue.html" rel="bookmark"
+           title="Permalink to Front End Frameworks 3 - Vue">Front End Frameworks 3 - Vue</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>The third (and probably final) framework I'll be writing my timekeeping page in is Vue. I've worked on a project in the past
+which was written in "proper" Vue (with <code>.vue</code> files and a <code>npm</code> server), but I've forgotten basically all of it by now.</p>
+<p>Vue 3 has recently been made available, and I was also writing this page without the use of a server or bundler, so I
+essentially started again from 0.</p>
+<p>Despite this, I managed to go from no knowledge, reading tutorials to figure out how to make Vue work, to having
+the page re-written in about 2 and a half hours (compared to multiple days with the previous two rewrites).</p>
+<p>The main reason for this is the fact that Vue lets me use the HTML I had already written with just some small modifications.</p>
+<h2 id="the-page">The Page</h2>
+<p>As before, this is a screenshot of the page I am rewriting. It contains a form in which the user enters information of how
+they have spent their time, and a table below which shows what has been entered.</p>
+<p>When the Date field is changed, the table underneath updates to show the time logged for that day.</p>
+<p><img src="/images/timekeeping.png" alt="Timekeeping system" width="98%"></p>
+<h2 id="the-template-changes">The Template Changes</h2>
+<p>Previously, the HTML for the table was in a separate template to the form, and it was rendered and injected by an
+XHR request.</p>
+<p>For the Vue rewrite, I can put the table directly below the form, and just add some <code>v-for</code> and <code>v-model</code>s to the existing
+HTML.</p>
+<pre><code>:::html
+&lt;h1&gt;Log Your Time&lt;/h1&gt;
+
+&lt;div id="app"&gt;
+
+    &lt;form name="log_time_form" class="edit-form" method="POST" @submit.prevent="onFormSubmit"&gt;
+
+        &lt;input type="hidden" name="user_id" value="{{user_id}}"&gt;
+
+        &lt;div class="form-piece"&gt;
+            &lt;label&gt;Date&lt;/label&gt;
+            &lt;input name="date" type="text" v-model="date" id="date_input"&gt;
+        &lt;/div&gt;
+
+        &lt;div class="form-piece"&gt;
+            &lt;label&gt;IP&lt;/label&gt;
+            &lt;select name="ip_id" v-model="ip_id"&gt;
+                {% for ip in all_ips %}
+                    &lt;option value="{{ip.ip_id}}" {{"selected" if ip_id and ip_id|int == ip.ip_id else ""}}&gt;
+                        {{ip.long_name}}
+                    &lt;/option&gt;
+                {% endfor %}
+            &lt;/select&gt;
+        &lt;/div&gt;
+
+        &lt;div class="form-piece"&gt;
+            &lt;label&gt;Duration&lt;/label&gt;
+            &lt;input type="text" name="duration" v-model="duration"&gt;
+            &lt;span class="small" style="margin-top:-20px;margin-left:23%;"&gt;e.g. 1d, 1h30m, 90m, 90&lt;/span&gt;
+        &lt;/div&gt;
+
+        &lt;div class="form-piece"&gt;
+            &lt;label&gt;Description&lt;/label&gt;
+            &lt;input type="text" name="message" v-model="message"&gt;
+        &lt;/div&gt;
+
+        &lt;input type="submit" value="Save" class="btn btn-blue"&gt;
+
+    &lt;/form&gt;
+
+    &lt;div id="user_entries_area"&gt;
+        &lt;table class="time-log-table"&gt;
+            &lt;thead&gt;
+                &lt;tr&gt;
+                    &lt;td&gt;IP&lt;/td&gt;
+                    &lt;td&gt;Time&lt;/td&gt;
+                    &lt;td&gt;Message&lt;/td&gt;
+                    &lt;td&gt;Delete&lt;/td&gt;
+                    &lt;td&gt;Clone&lt;/td&gt;
+                &lt;/tr&gt;
+            &lt;/thead&gt;
+            &lt;tbody v-if="logs.length"&gt;
+                &lt;tr v-for="log in logs"&gt;
+                    &lt;td&gt;[[log.ip_name]]&lt;/td&gt;
+                    &lt;td&gt;[[log.duration_formatted]]&lt;/td&gt;
+                    &lt;td&gt;[[log.message]]&lt;/td&gt;
+                    &lt;td&gt;&lt;i class="fa fa-trash" &gt;&lt;/i&gt;&lt;/td&gt;
+                    &lt;td&gt;&lt;i class="fa fa-copy" &gt;&lt;/i&gt;&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                    &lt;td&gt;&lt;/td&gt;
+                    &lt;td&gt;[[total_duration]]&lt;/td&gt;
+                    &lt;td&gt;&lt;/td&gt;
+                    &lt;td&gt;&lt;/td&gt;
+                    &lt;td&gt;&lt;/td&gt;
+                &lt;/tr&gt;
+            &lt;/tbody&gt;
+        &lt;/table&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<p>Looking through the elements of the form, you can see that I have added a <code>@submit.prevent</code> to run a javascript function
+when the form is submitted, and I have added some <code>v-model</code>s to each input.</p>
+<p>The IPs dropdown is still using Jinja's <code>{{double-brace}}</code> syntax to add python variables and logic to the HTML. For this to
+stay as-is, I will need to change the syntax used by Vue to denote variables.</p>
+<p>If we now look at the table, we can see a <code>v-if</code> and <code>v-for</code> which are responsible for hiding and populating the rows
+in the table.</p>
+<p>The data is placed between <code>[[double-square]]</code> brackets, as we have to differentiate Vue's replacements from Jinja's.</p>
+<p>With the template done, we can now go over the Vue code to render this page. Due to the lack of HTML, it is much shorter
+than the previous implementations.</p>
+<h2 id="the-javascript">The Javascript</h2>
+<pre><code>:::typescript
+const app = Vue.createApp({
+    delimiters: ['[[', ']]'],
+    data() {
+        return {
+            date: getFormattedDate(new Date()),
+            ip_id: 1,
+            duration: '',
+            message: '',
+            total_duration: '0 Minutes',
+            logs: [],
+        }
+    },
+    mounted() {
+        this.fetchLogs(this.date);
+
+        var dateInput = document.getElementById("date_input");
+
+        dateInput.addEventListener("change", function(e) {
+            this.date = e.target.value;
+            this.fetchLogs()
+        }.bind(this))
+
+        new Choices(document.querySelector('select[name="ip_id"]'), {itemSelectText: '',})
+    },
+    methods: {
+        onFormSubmit() {
+            var form = document.forms["log_time_form"];
+            var formData = new FormData(form);
+
+            fetch("/admin/logs/save", {method: "POST", body: formData})
+            .then((res) =&gt; res.json())
+            .then((result) =&gt; {
+                this.logs = result.data;
+                this.total_duration = result.total_duration;
+            })
+        },
+        fetchLogs() {
+            var url = "/admin/logs/xhr_fetch_user_logs";
+            var date = this.date;
+            if (date) {
+                url += "?date=" + date;
+            }
+
+           fetch(url)
+           .then((res) =&gt; res.json())
+           .then((result) =&gt; {
+                this.logs = result.data;
+                this.total_duration = result.total_duration;
+            });
+
+        }
+    },
+}).mount("#app")
+</code></pre>
+<p>The first thing we do with our Vue object is set the delimeters to <code>[[</code> and <code>]]</code> as we saw in the template, to allow Vue
+to coexist with jinja.</p>
+<p>Inside the <code>data</code> function, we have a variable for each of the form inputs, one to store the total duration, and one to hold
+the logs for the chosen date.</p>
+<p>Under <code>mounted</code> we first grab the logs for display in the table, then we bind an event to the datepicker's <code>change</code> event.
+This function will fetch the user's logs for the chosen date, then update the input's value to the one chosen. Finally,
+<code>choices</code> is instantiated over the IP dropdown, which is already populated on the server-side by Jinja, unlike the previous
+rewrites.</p>
+<p>Two <code>methods</code> are defined - one for fetching the logs for the current date via XHR, and one which will send an XHR request
+to save a new entry, then update the table with the server's response.</p>
+<p>That's it, The page is now re-done in Vue with much less effort than my other rewrites.</p>
+<h2 id="thoughts-on-vue-vs-mithril-and-react">Thoughts on Vue vs Mithril and React</h2>
+<p>Compared to the other frameworks I tried, Vue was definitely the fastest to refactor into. It allowed me to continue
+using the HTML I had already written.</p>
+<p>I also like how it visibly separates the data, initialisation, and generic functions. I found this very easy to wrap
+my head around. </p>
+<p>However, I really <em>don't</em> like the fact that, to split a Vue project into components, the HTML has to be stored as a string
+in the javascript object. This feels wrong to me, and prevents an IDE from helping you to write this HTML. I actually
+find this worse than having to write it as a series of functions. </p>
+<p>In terms of which I would use in the future, I think if I had something already written with HTML, I would likely use Vue
+so that I can keep the old templates around. For something entirely new, I think I would lean toward React - mainly for its
+popularity, and the ability to split it into component objects without storing HTML as a string.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>
