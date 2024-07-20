@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Why All Developers Should Code in a Virtual Machine</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/why-all-developers-should-code-in-a-virtual-machine.html" rel="bookmark"
+           title="Permalink to Why All Developers Should Code in a Virtual Machine">Why All Developers Should Code in a Virtual Machine</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>As I've talked about in another post, my work setup involves running an Oracle Linux 8 VM via VirtManager to install and run all of my projects. My reason for this is, in a word, "security", and in this post I'll go over exactly how and why I use this set-up and why I think it's the way <em>all</em> developers should be working (with the obvious caveat of having a powerful-enough machine).</p>
+<h2 id="why-use-vms">Why Use VMs?</h2>
+<p>As a developer, you are likely installing many packages from third-party repositories such as <code>npm</code>, <code>pip</code>, <code>cargo</code>, and the like. These packages can be written by anyone, and can do absolutely <em>anything</em> on your computer. </p>
+<p>There is no shortage of news articles about malware found in <a href="https://www.zdnet.com/article/hundreds-more-malicious-packages-found-in-npm-factory/">npm</a>, <a href="https://arstechnica.com/information-technology/2023/02/451-malicious-packages-available-in-pypi-contained-crypto-stealing-malware/">pip</a>, <a href="https://blog.phylum.io/rust-malware-staged-on-crates-io/">cargo</a>, <a href="https://thehackernews.com/2023/10/malicious-nuget-packages-caught.html">nuget</a>, etc. These are just random news articles found by googling "Malware found in <code>$repo_name</code>", and there are plenty of results for each. </p>
+<p>There are also YouTubers making videos about how they have run into this exact issue, such as <a href="https://www.youtube.com/watch?v=g2DO2Xhccq8">this one by ThioJoe</a>.</p>
+<p>For this reason, it only makes sense to keep as much untrusted third-party code as possible away from important files, such as SSH / GPG keys, your browser cache folder (<code>~/.firefox</code> on Linux, etc) and any work credentials such as <code>~/.aws</code> and the like.</p>
+<p>The way to achieve this is isolation - keep your development <em>away</em> from your home directory.</p>
+<h2 id="how-i-set-up-my-work-machine">How I Set Up My Work Machine</h2>
+<p>Essentially, I install any Linux distro which can run VirtManager (which I imagine is most of them) and then create a VM running the same OS as production, where possible. In my case, that's Oracle Linux 8.</p>
+<p>Inside this VM lives anything I will need to use while coding, including <code>pyenv</code>, <code>nvm</code>, <code>ripgrep</code>, etc.</p>
+<h3 id="the-host">The Host</h3>
+<p>I try and keep as little as possible on the actual host, for reasons of both stability and reducing potential attack surface. I find Fedora Silverblue a good fit for this usecase, since it's immutable and atomic, which generally nudges users towards keeping things away from the host. </p>
+<p>Aside from VirtManager, I have Evolution installed to read my work emails, a couple of web browsers (since my job is Web Developer), DBeaver to explore databases, and Bruno to test APIs. I prefer to use web-apps of things which will run in a browser, such as Slack.</p>
+<h3 id="coding-and-running-servers">Coding and Running Servers</h3>
+<p>As a neovim user, it's as simple as <code>ssh</code>ing in to my development VM and running <code>nvim</code> directly.</p>
+<p>To access webservers started in the VM, I use ssh tunnelling to bind the ports back to <code>localhost</code>:</p>
+<pre><code class="language-bash">ssh -N Dvlv@192.168.122.55 -L 8080:192.168.122.55:8080
+</code></pre>
+<p>With the above script, and running my flask servers on host <code>0.0.0.0</code>, I can visit <code>http://localhost:8080</code> from the host and it will all work.</p>
+<h3 id="version-control">Version Control</h3>
+<p>Checking code into Github requires the use of my SSH and GPG keys, which I've mentioned are kept away from the VM. Therefore, I need a way to get the code back to my host so that I can push it to version control.</p>
+<p>To do this, I have a script which will mount the VM's <code>Work</code> directory via <code>sshfs</code> but disallow executing anything:</p>
+<pre><code class="language-bash">sshfs -o noexec Dvlv@192.168.122.55:/var/Work /home/Dvlv/Work
+</code></pre>
+<p>Now I can just move to the relevant folder in <code>~/Work</code> and run <code>git</code> commands as normal, but nothing inside the mounted folder can execute anything on my host.</p>
+<h2 id="how-i-set-up-my-personal-machines">How I Set Up My Personal Machines</h2>
+<p>I'm a bit lazier with my personal devices, and they aren't as beefy as my work machine.</p>
+<p>I install VirtManager on the host as before, but I then install a graphical linux distro, usually Fedora Workstation. I run this VM in fullscreen, and use it like somebody would use their regular install - just install things onto it via the package manager.</p>
+<p>Most of these VMs don't have my neovim setup added, I will just install either VSCodium or a JetBrains IDE and use it as normal.</p>
+<p>I typically have a separate VM for each programming language - one for Python, one for Rust and one for C++ currently. </p>
+<p>Once the distro is installed and updated, and my programming tools are installed, I will take a snapshot of the VM so that I can cleanly revert to "day 1" if there is ever any need - although I rarely will ever update a VM once I am working on a project.</p>
+<p>All tooling is thereby confined to its own VM, as well as any web browsing (i.e. googling for how to do stuff in the relevant programming language). </p>
+<p>On one machine I use the <code>sshfs</code> setup as above, but on another I just tend to <code>rsync</code> the VM's project folder down to the host and use <code>git</code> as normal from inside. This is slightly less convenient however, as if I work on that project from another machine, I have to remember to <code>git pull</code> then <code>rsync</code> the changes back from the host to the VM before I resume coding.</p>
+<h2 id="negatives-of-this-approach">Negatives of this approach</h2>
+<p>As alluded to, this requires a machine with enough spare RAM and Disk to run an extra VM. If your machine has 8GB RAM or less, this may not be very practical.</p>
+<p>Also, due to my use of <code>ssh</code>ing and running neovim, there isn't a display server or clipboard agent running in my Oracle VM. This means if I need to copy-paste a code snippet to a colleague, I typically have to <code>cat</code> the file from the <code>sshfs</code> mount on the host and then copy-paste that. If I used a graphical set-up like on my personal machines, this would be no issue as the clipboards would sync.</p>
+<h2 id="can-i-use-containers-for-this">Can I Use Containers for This?</h2>
+<p>Possibly, but I have no personal experience with setting up and isolating containers. </p>
+<h2 id="isnt-this-just-qubes-os">Isn't This Just Qubes OS?</h2>
+<p>Essentially yes, but with the comfort of being doable on any distro (or even MacOS via something like <a href="https://mac.getutm.app/">UTM</a>).</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

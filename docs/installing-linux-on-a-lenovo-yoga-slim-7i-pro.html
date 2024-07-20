@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Installing Linux on a Lenovo Yoga Slim 7i Pro</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/installing-linux-on-a-lenovo-yoga-slim-7i-pro.html" rel="bookmark"
+           title="Permalink to Installing Linux on a Lenovo Yoga Slim 7i Pro">Installing Linux on a Lenovo Yoga Slim 7i Pro</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>Short post to help anyone else who is trying to get Linux working on a Lenovo Yoga Slim 7i Pro (Intel).</p>
+<p>The machine did not work perfectly out-of-the-box for me, even on a very new Kernel (5.15, Fedora Silverblue).</p>
+<p>The keyboard does not work properly after booting, and the screen will just flicker random colours.</p>
+<p>To boot the live USB, you will need to use "Safe Graphics Mode" or "Basic Graphics Mode", or something similar. This should be an option in the menu when booting your live USB.</p>
+<p>After install, to fix these issues you will need to add the following Grub flags:</p>
+<pre><code>i8042.direct i8042.dumbkbd i915.enable_psr=0
+</code></pre>
+<p>If you booted in Safe Graphics Mode, you will also need to remove the <code>nomodeset</code> flag.</p>
+<p>How to do this depends on your distribution. On Silverblue, the command is:</p>
+<pre><code>rpm-ostree kargs --editor
+</code></pre>
+<p>On other distributions, you probably do this by editing <code>/etc/default/grub</code> and finding the section <code>GRUB_CMDLINE_LINUX_DEFAULT</code>, where you can put the new flags inside the speech marks.</p>
+<p>Afterwards, run <code>sudo update-grub</code> to regenerate your Grub file.</p>
+<p>That should sort both issues out.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Dvlv's Blog - Linux</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+        <section id="content" class="body">
+            <h1>Blog Posts</h1>
+            <p>Here you will find various writings on subjects which I deem interesting enough to write about. That typically includes 
+            web development, miscellaneous programming with python and the Godot game engine, and linux things.</p>
+            <p>If you wish to discuss anything you read here, feel free to open an issue over at <a href="https://github.com/Dvlv/blog">the Github source of this blog</a>.</p>
+            <hr>
+            <ol id="posts-list" class="hfeed" start="9">
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/creating-a-searchable-dropdown-of-strings-in-gtk-rs-rust-gtk4.html" rel="bookmark"
+                       title="Permalink to Creating a Searchable Dropdown of Strings in GTK-rs (Rust + GTK4)">Creating a Searchable Dropdown of Strings in GTK-rs (Rust + GTK4)</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2024-02-01T00:00:00+00:00">
+                Published: Thu 01 February 2024
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>A short post because this took me hours of trial and error to figure out.</p>
+<pre><code class="language-rust">// Step 1:
+let my_string_vec = vec![&quot;one&quot;, &quot;two&quot;, &quot;apples&quot;, &quot;appstore&quot;, &quot;append&quot;];
+let imgs_strlist = gtk::StringList::new(my_string_vec.as_slice());
+
+// Step 2:
+let exp = gtk::PropertyExpression::new(
+    gtk::StringObject::static_type(),
+    None::&lt;gtk::Expression&gt;,
+    &quot;string&quot;,
+);
+
+// Step 3:
+let my_select …</code></pre>
+            <a class="readmore" href="/creating-a-searchable-dropdown-of-strings-in-gtk-rs-rust-gtk4.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/my-linux-distro-tier-list.html" rel="bookmark"
+                       title="Permalink to My Linux Distro Tier List">My Linux Distro Tier List</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2023-12-18T00:00:00+00:00">
+                Published: Mon 18 December 2023
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>Just for fun, I decided to throw together a tier list showcasing my opinions / experiences with a bunch of Linux distros. These usually make for entertaining YouTube videos, but I don't make videos, so I'll try it in text format.</p>
+<p>Note: These are my personal opinions based on my own …</p>
+            <a class="readmore" href="/my-linux-distro-tier-list.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/why-all-developers-should-code-in-a-virtual-machine.html" rel="bookmark"
+                       title="Permalink to Why All Developers Should Code in a Virtual Machine">Why All Developers Should Code in a Virtual Machine</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2023-11-04T00:00:00+00:00">
+                Published: Sat 04 November 2023
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>As I've talked about in another post, my work setup involves running an Oracle Linux 8 VM via VirtManager to install and run all of my projects. My reason for this is, in a word, "security", and in this post I'll go over exactly how and why I use this …</p>
+            <a class="readmore" href="/why-all-developers-should-code-in-a-virtual-machine.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/thoughts-on-fedora-silverblue-after-almost-two-years.html" rel="bookmark"
+                       title="Permalink to Thoughts on Fedora Silverblue After Almost Two Years">Thoughts on Fedora Silverblue After Almost Two Years</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2023-11-02T00:00:00+00:00">
+                Published: Thu 02 November 2023
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>I've been using Fedora Silverblue daily on my work laptop since around the release of version 35 (2nd Nov 2021 according to Wikipedia), and on my
+main personal machine since I bought it (Jan 2022). This has given me long enough to form an in-depth opinion of the distro, so …</p>
+            <a class="readmore" href="/thoughts-on-fedora-silverblue-after-almost-two-years.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/why-i-dislike-the-term-immutable-distro.html" rel="bookmark"
+                       title="Permalink to Why I Dislike the Term "Immutable Distro"">Why I Dislike the Term "Immutable Distro"</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2023-10-14T00:00:00+01:00">
+                Published: Sat 14 October 2023
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>Immutable Distros are something I've written quite a lot about recently, but I'm really not fond of the actual term. I use it because, for better or worse, it's become part of the linux vernacular. However, it seems like most people who are actually involved
+in the immutable distro "scene …</p>
+            <a class="readmore" href="/why-i-dislike-the-term-immutable-distro.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/are-immutable-linux-distros-taking-your-freedom.html" rel="bookmark"
+                       title="Permalink to Are Immutable Linux Distros Taking Your Freedom?">Are Immutable Linux Distros Taking Your Freedom?</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2023-06-11T00:00:00+01:00">
+                Published: Sun 11 June 2023
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>As someone who loves the idea of the Immutable / Atomic / Image-Based distros, I tend to find myself reading or watching a fair bit of discourse around them. A common sentiment you will come across
+in this area is the idea that an Immutable distro is "taking your freedom" or "too …</p>
+            <a class="readmore" href="/are-immutable-linux-distros-taking-your-freedom.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/making-linux-mint-a-pretend-immutable-distro-with-btrfs-and-timeshift.html" rel="bookmark"
+                       title="Permalink to Making Linux Mint a Pretend-Immutable Distro with Btrfs and Timeshift">Making Linux Mint a Pretend-Immutable Distro with Btrfs and Timeshift</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2023-03-18T00:00:00+00:00">
+                Published: Sat 18 March 2023
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>I'm definitely all-in on the new-ish trend of Immutable Distros, and I really think it will be The Future™. At the time of writing there are 2 big players in the immutable game - <a href="https://microos.opensuse.org/">Opensuse MicroOS</a> and <a href="https://silverblue.fedoraproject.org/">Fedora Silverblue/Kinoite</a>. These are both essentially bleeding-edge distros, meaning bugs in the newest …</p>
+            <a class="readmore" href="/making-linux-mint-a-pretend-immutable-distro-with-btrfs-and-timeshift.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/my-experience-with-githut-copilot-and-why-i-cancelled-the-trial.html" rel="bookmark"
+                       title="Permalink to My Experience with Githut Copilot, and Why I Cancelled The Trial">My Experience with Githut Copilot, and Why I Cancelled The Trial</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2023-03-12T00:00:00+00:00">
+                Published: Sun 12 March 2023
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>AI is all the rage at the moment, and my manager at work encouraged us to try out some of the new tooling which is doing the rounds; one of which being Github Copilot.</p>
+<p>I activated the 60 day trial and installed the Neovim plugin, and have been using it …</p>
+            <a class="readmore" href="/my-experience-with-githut-copilot-and-why-i-cancelled-the-trial.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/rebasing-to-fedora-silverblue-37-with-firefox-removed.html" rel="bookmark"
+                       title="Permalink to Rebasing to Fedora Silverblue 37 With Firefox Removed">Rebasing to Fedora Silverblue 37 With Firefox Removed</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2022-11-16T00:00:00+00:00">
+                Published: Wed 16 November 2022
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <h2 id="tldr">TL;DR</h2>
+<pre><code class="language-bash">rpm-ostree override reset firefox
+(reboot)
+rpm-ostree rebase fedora:fedora/37/x86_64/silverblue
+(reboot)
+rpm-ostree override remove firefox firefox-langpacks
+</code></pre>
+<h2 id="explanation">Explanation</h2>
+<p>With Fedora 37, the Firefox package has been split into two, <code>firefox</code> and <code>firefox-langpacks</code>.</p>
+<p>Some people choose to remove the base Firefox in favour of the Flatpak, but this …</p>
+            <a class="readmore" href="/rebasing-to-fedora-silverblue-37-with-firefox-removed.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+        <li><article class="hentry">
+            <header>
+                <h1><a href="/my-webdev-setup-on-fedora-silverblue.html" rel="bookmark"
+                       title="Permalink to My WebDev Setup on Fedora Silverblue">My WebDev Setup on Fedora Silverblue</a></h1>
+            </header>
+
+            <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2022-11-05T00:00:00+00:00">
+                Published: Sat 05 November 2022
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/dvlv.html">Dvlv</a>
+        </address>
+<p>In <a href="/category/linux.html">Linux</a>.</p>
+<p>tags: <a href="/tag/linux.html">Linux</a> </p>
+</footer><!-- /.post-info -->            <p>This post is a kind of follow-up to <a target="_blank" href="https://www.dvlv.co.uk/using-fedora-silverblue-for-a-more-secure-development-machine.html">my previous post about my work machine</a>, but with the changes that I've made since first setting up Silverblue, and a focus on the particular software I use for my job (and some details on how I use it, and how I've …</p>
+            <a class="readmore" href="/my-webdev-setup-on-fedora-silverblue.html">read more</a>
+            </div><!-- /.entry-content -->
+        </article></li>
+                </ol><!-- /#posts-list -->
+<p class="paginator">
+    Page 1 / 3
+        <a href="/category/linux2.html">&raquo;</a>
+        <a href="/category/linux3.html">&#8649;</a>
+</p>
+                </section><!-- /#content -->
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

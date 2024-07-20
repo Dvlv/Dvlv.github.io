@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Using asyncio to speed up Flask API calls</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/using-asyncio-to-speed-up-flask-api-calls.html" rel="bookmark"
+           title="Permalink to Using asyncio to speed up Flask API calls">Using asyncio to speed up Flask API calls</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>For a work project I am currently building, I have been tasked with creating a stats page for a particular site. This is completely the norm at my workplace, with one exception.</p>
+<p>Typically we have an in-house database / service for amalgamating all sorts of numbers and dates, and we query this service and put its output into DataTables. Stats done!</p>
+<p>For my project, the stats are in two separate places - Google Analytics, and another company that we partner with.</p>
+<p>To top it off, this other company do not have a very flexible API. When generating &quot;site overview&quot; stats about each product on that site,
+we require one api call <em>per product</em> to get all of this information. As you can imagine, this makes the stats rather slow to load.</p>
+<p>I wanted to find a way to speed this particular page up without making a drastic change to the structure of the whole site. I was familiar with asyncio, but didn't realise it could be integrated into a Flask application pretty painlessly.</p>
+<p>In this post I will show how I have used <tt class="docutils literal">asyncio</tt> and <tt class="docutils literal">aiohttp</tt> to speed up the aforementioned stats page. Obviously I will have to &quot;censor&quot; some of the code as it deals with business logic, but hopefully the method will be easy to understand.</p>
+<div class="section" id="adding-an-event-loop-to-flask">
+<h2>Adding an event loop to Flask</h2>
+<p>This is stupid simple. Just open the file in which you declare your flask app (as in, <tt class="docutils literal">app = Flask(__name__)</tt>) and throw these lines in:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+
+<span class="n">event_loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="section" id="using-the-event-loop-to-perform-api-calls">
+<h2>Using the event loop to perform API calls</h2>
+<p>Next, in the class which I am using to communicate with the external API, I defined the following method:</p>
+<div class="highlight"><pre><span></span><span class="n">async</span> <span class="k">def</span> <span class="nf">fetch_and_populate_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Asynchronously calls a url with aiohttp and puts the resulting html into a</span>
+<span class="sd">    dictionary against provided key.</span>
+
+<span class="sd">    :param url: url to load</span>
+<span class="sd">    :param dictionary: dict of return values</span>
+<span class="sd">    :param key: key to add this result to into dictionary</span>
+<span class="sd">    :return: ``None``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">async</span> <span class="k">with</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">,</span> <span class="n">async_timeout</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">180</span><span class="p">):</span>
+        <span class="n">full_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span> <span class="o">+</span> <span class="n">url</span> <span class="o">+</span> <span class="s2">&quot;&amp;api_key=&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span>
+        <span class="n">async</span> <span class="k">with</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">full_url</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
+            <span class="n">dictionary</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">await</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+</pre></div>
+<p>This method takes a url path, a dictionary, and the required key. After building the full url, it then uses aiohttp to asynchronously fetch the url's contents and put them into the provided dictionary, under the given key.</p>
+<p>Now to make use of this method:</p>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+
+<span class="c1"># *wrangle some data*</span>
+
+<span class="n">summary_urls</span> <span class="o">=</span> <span class="p">{</span><span class="n">c_id</span><span class="p">:</span> <span class="n">get_summary_url</span><span class="p">(</span><span class="n">o_id</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="k">for</span> <span class="n">c_id</span><span class="p">,</span> <span class="n">o_id</span> <span class="ow">in</span> <span class="n">some_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="n">all_summaries</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">all_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="n">summary_future</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fetch_and_populate_dict</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">all_summaries</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">summary_urls</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+<span class="kn">from</span> <span class="nn">web.project_name</span> <span class="kn">import</span> <span class="n">event_loop</span>
+<span class="n">event_loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">summary_future</span><span class="p">)</span>
+
+<span class="c1"># Now process the all_summaries dictionary</span>
+</pre></div>
+<p>Here I build a dictionary of ids to urls for some system-specific IDs (<tt class="docutils literal">get_summary_url</tt> just builds an API endpoint url path).</p>
+<p>With this information at hand, I then loop through the items of this dict, passing them as variables to <tt class="docutils literal">fetch_and_populate_dict</tt>. The resulting tuple is then itself expanded and passed as arguments to <tt class="docutils literal">asyncio.gather</tt>.</p>
+<p>With the futures all gathered, all that is left to do is import the <tt class="docutils literal">event_loop</tt> from the project root and call its <tt class="docutils literal">run_until_complete</tt> method on our gathered futures.</p>
+<p>This will asynchronously collect the results of a GET request to each generated URL and populate its result as a value of <tt class="docutils literal">all_summaries</tt>.</p>
+</div>
+<div class="section" id="an-example">
+<h2>An example</h2>
+<p>To perhaps better explain this, imagine an API where a name is passed as a GET parameter and it simply returns <tt class="docutils literal">&quot;Hello {name}&quot;</tt>. Also imagine this takes a long time for the service to compute.</p>
+<p>Given a list of names, we would first generate a dict of name =&gt; url mappings, such as:</p>
+<div class="highlight"><pre><span></span><span class="n">names_to_urls</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;bob&quot;</span><span class="p">:</span> <span class="s2">&quot;http://localhost:5000/greet/?name=bob&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bill&quot;</span><span class="p">:</span> <span class="s2">&quot;http://localhost:5000/greet/?name=bill&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;betty&quot;</span><span class="p">:</span> <span class="s2">&quot;http://localhost:5000/greet/?name=betty&quot;</span>
+<span class="p">}</span>
+</pre></div>
+<p>Then we define an empty dict which will be used to gather our data:</p>
+<div class="highlight"><pre><span></span><span class="n">greets</span> <span class="o">=</span> <span class="p">{}</span>
+</pre></div>
+<p>finally, we loop through the items in our <tt class="docutils literal">names_to_urls</tt> and pass them to <tt class="docutils literal">fetch_and_populate_dict</tt>.</p>
+<div class="highlight"><pre><span></span><span class="n">greet_future</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fetch_and_populate_dict</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">greets</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">names_to_urls</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+<span class="n">event_loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">greet_future</span><span class="p">)</span>
+</pre></div>
+<p>Once the urls have been fetched, <tt class="docutils literal">greets</tt> will look like so:</p>
+<div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;bob&quot;</span><span class="p">:</span> <span class="s2">&quot;Hello bob&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bill&quot;</span><span class="p">:</span> <span class="s2">&quot;Hello bill&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;betty&quot;</span><span class="p">:</span> <span class="s2">&quot;Hello betty&quot;</span>
+<span class="p">}</span>
+</pre></div>
+<p>With the code in place, there is one thing to note: you cannot run this application in multiple threads.</p>
+<p>In practical terms, this means when developing you will need <tt class="docutils literal">threaded=False</tt> and <tt class="docutils literal">use_reloader=False</tt> in your call to <tt class="docutils literal">app.run</tt>.</p>
+<p>In production I have <tt class="docutils literal">threads=1</tt> in my uwsgi.ini file (the same would be required if using gunicorn, too).</p>
+<p>I hope this example helps you to understand how to use <tt class="docutils literal">asyncio</tt> to speed up multiple API calls in a flask application.</p>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

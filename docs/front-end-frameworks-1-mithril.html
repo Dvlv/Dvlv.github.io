@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Front End Frameworks 1 - Mithril</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/front-end-frameworks-1-mithril.html" rel="bookmark"
+           title="Permalink to Front End Frameworks 1 - Mithril">Front End Frameworks 1 - Mithril</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>Despite my general dislike for the overcomplicated front-end frameworks, I have found myself on about 3 occasions now thinking they could possibly be an easier
+way of tackling a particular problem.</p>
+<p>During a small window of not-much-going-on at work, I decided to finally give some of them a try. After much online research, the one I found which caught
+my eye the most was <a class="reference external" href="https://mithril.js.org/">mithriljs</a>.</p>
+<p>The best part about Mithril is that there is, by default, no build step, and no need for running ANOTHER web server, something which really annoyed
+me about the popular three (although I've now found out, at least React and Vue can also be run without a server).</p>
+<p>I decided to take a page in a recent project of mine - a timekeeping system - and rewrite this page using Mithril. The reason for choosing this page in
+particular was because it currently operates by making some XHR requests to a flask endpoint, then using <tt class="docutils literal">innerHTML</tt> to inject the result, which isn't very
+graceful.</p>
+<p>This is just an internal tool, which I doubt we would ever be able to offer as a service, so I feel okay sharing small bits of the code here.</p>
+<div class="section" id="the-page">
+<h2>The Page</h2>
+<p>The page is a fairly simple one, at the top half there is a form where a user chooses a date, an IP (which in a normal company would be a &quot;project&quot;), an amount of time,
+and writes a small description of what they worked on.</p>
+<p>Once they submit this form, a small table underneath the form updates with a row containing the information they just submitted.</p>
+<img alt="timekeeping system" class="align-center" src="/images/timekeeping.png" style="width: 98%;" />
+<p>Currently, the table is rendered by an XHR request which renders a Jinja template, and this is injected with <tt class="docutils literal">innerHTML(res.responseText)</tt>.</p>
+</div>
+<div class="section" id="the-old-way">
+<h2>The Old Way</h2>
+<p>The current way this page works is by rendering templates with Jinja, as per a normal flask application.</p>
+<p>The template rendered contains the form and a div with a particular ID, which is where the table is injected.</p>
+<div class="highlight"><pre><span></span><span class="cp">{%</span> <span class="k">extends</span> <span class="s2">&quot;base.html&quot;</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">main</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="x">    &lt;h1&gt;Log Your Time&lt;/h1&gt;</span>
+
+<span class="x">    &lt;form name=&quot;log_time_form&quot; class=&quot;edit-form&quot; method=&quot;POST&quot; action=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;admin.save_log&#39;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;</span>
+
+<span class="x">        &lt;input type=&quot;hidden&quot; name=&quot;user_id&quot; value=&quot;</span><span class="cp">{{</span><span class="nv">user_id</span><span class="cp">}}</span><span class="x">&quot;&gt;</span>
+
+<span class="x">        &lt;div class=&quot;form-piece&quot;&gt;</span>
+<span class="x">            &lt;label&gt;Date&lt;/label&gt;</span>
+<span class="x">            &lt;input name=&quot;date&quot; type=&quot;text&quot; value=&quot;</span><span class="cp">{{</span><span class="nv">date</span> <span class="k">if</span> <span class="nv">date</span> <span class="k">else</span> <span class="nv">today</span><span class="cp">}}</span><span class="x">&quot;&gt;</span>
+<span class="x">        &lt;/div&gt;</span>
+
+<span class="x">        &lt;div class=&quot;form-piece&quot;&gt;</span>
+<span class="x">            &lt;label&gt;IP&lt;/label&gt;</span>
+<span class="x">            &lt;select name=&quot;ip_id&quot;&gt;</span>
+<span class="x">                </span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">ip</span> <span class="k">in</span> <span class="nv">all_ips</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">                    &lt;option value=&quot;</span><span class="cp">{{</span><span class="nv">ip.ip_id</span><span class="cp">}}</span><span class="x">&quot; </span><span class="cp">{{</span><span class="s2">&quot;selected&quot;</span> <span class="k">if</span> <span class="nv">ip_id</span> <span class="k">and</span> <span class="nv">ip_id</span><span class="o">|</span><span class="nf">int</span> <span class="o">==</span> <span class="nv">ip.ip_id</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="cp">}}</span><span class="x">&gt;</span>
+<span class="x">                        </span><span class="cp">{{</span><span class="nv">ip.long_name</span><span class="cp">}}</span><span class="x"></span>
+<span class="x">                    &lt;/option&gt;</span>
+<span class="x">                </span><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">            &lt;/select&gt;</span>
+<span class="x">        &lt;/div&gt;</span>
+
+<span class="x">        &lt;div class=&quot;form-piece&quot;&gt;</span>
+<span class="x">            &lt;label&gt;Duration&lt;/label&gt;</span>
+<span class="x">            &lt;input type=&quot;text&quot; name=&quot;duration&quot;&gt;</span>
+<span class="x">            &lt;span class=&quot;small&quot; style=&quot;margin-top:-20px;margin-left:23%;&quot;&gt;e.g. 1d, 1h30m, 90m, 90&lt;/span&gt;</span>
+<span class="x">        &lt;/div&gt;</span>
+
+<span class="x">        &lt;div class=&quot;form-piece&quot;&gt;</span>
+<span class="x">            &lt;label&gt;Description&lt;/label&gt;</span>
+<span class="x">            &lt;input type=&quot;text&quot; name=&quot;message&quot;&gt;</span>
+<span class="x">        &lt;/div&gt;</span>
+
+<span class="x">        &lt;input type=&quot;submit&quot; value=&quot;Save&quot; class=&quot;btn btn-blue&quot;&gt;</span>
+
+<span class="x">    &lt;/form&gt;</span>
+
+<span class="x">    &lt;div id=&quot;user_entries_area&quot;&gt;&lt;/div&gt;</span>
+
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">js</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    &lt;script src=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;static&#39;</span><span class="o">,</span> <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;js/common.js&quot;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;&lt;/script&gt;</span>
+<span class="x">    &lt;script src=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;static&#39;</span><span class="o">,</span> <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;js/logs/log_time_form.js&quot;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;&lt;/script&gt;</span>
+<span class="x">    &lt;script&gt;</span>
+
+<span class="x">        window.addEventListener(&#39;DOMContentLoaded&#39;, function() {</span>
+
+<span class="x">           // do some JS stuff here</span>
+<span class="x">        });</span>
+
+<span class="x">    &lt;/script&gt;</span>
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span><span class="x"></span>
+</pre></div>
+<p>I've cut out some bits for brevity, but as you can see it's a fairly normal Jinja template. The form is built with HTML, then there's a
+div with the id <tt class="docutils literal">user_entries_area</tt> which is where the table will be injected.</p>
+<p>Speaking of the table:</p>
+<div class="highlight"><pre><span></span><span class="x">&lt;table class=&quot;time-log-table&quot;&gt;</span>
+<span class="x">    &lt;thead&gt;</span>
+<span class="x">        &lt;tr&gt;</span>
+<span class="x">            &lt;td&gt;IP&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;Time&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;Message&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;Delete&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;Clone&lt;/td&gt;</span>
+<span class="x">        &lt;/tr&gt;</span>
+<span class="x">    &lt;/thead&gt;</span>
+<span class="x">    &lt;tbody&gt;</span>
+<span class="x">        </span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">log</span> <span class="k">in</span> <span class="nv">logs</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">            &lt;tr&gt;</span>
+<span class="x">                &lt;td&gt;</span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s2">&quot;ip_name&quot;</span><span class="o">]</span><span class="cp">}}</span><span class="x">&lt;/td&gt;</span>
+<span class="x">                &lt;td&gt;</span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s2">&quot;duration_formatted&quot;</span><span class="o">]</span><span class="cp">}}</span><span class="x">&lt;/td&gt;</span>
+<span class="x">                &lt;td&gt;</span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s2">&quot;message&quot;</span><span class="o">]</span><span class="cp">}}</span><span class="x">&lt;/td&gt;</span>
+<span class="x">                &lt;td&gt;&lt;i class=&quot;fa fa-trash&quot; onclick=&#39;deleteLog(</span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s2">&quot;log_id&quot;</span><span class="o">]</span><span class="cp">}}</span><span class="x">);&#39;&gt;&lt;/i&gt;&lt;/td&gt;</span>
+<span class="x">                &lt;td&gt;&lt;i class=&quot;fa fa-copy&quot; onclick=&#39;copyLog(</span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s2">&quot;ip_id&quot;</span><span class="o">]</span><span class="cp">}}</span><span class="x">, &quot;</span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s1">&#39;ip_name&#39;</span><span class="o">]</span><span class="cp">}}</span><span class="x">&quot;, </span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s2">&quot;duration&quot;</span><span class="o">]</span><span class="cp">}}</span><span class="x">, &quot;</span><span class="cp">{{</span><span class="nv">log</span><span class="o">[</span><span class="s1">&#39;message&#39;</span><span class="o">]</span><span class="cp">}}</span><span class="x">&quot;);&#39;&gt;&lt;/i&gt;&lt;/td&gt;</span>
+<span class="x">            &lt;/tr&gt;</span>
+<span class="x">        </span><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">        &lt;tr&gt;</span>
+<span class="x">            &lt;td&gt;&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;</span><span class="cp">{{</span><span class="nv">total_duration</span><span class="cp">}}</span><span class="x">&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;&lt;/td&gt;</span>
+<span class="x">            &lt;td&gt;&lt;/td&gt;</span>
+<span class="x">        &lt;/tr&gt;</span>
+<span class="x">    &lt;/tbody&gt;</span>
+<span class="x">&lt;/table&gt;</span>
+</pre></div>
+<p>This table contains a row per entry logged, and displays the information entered, along with some buttons for deleting or cloning an entry (which we will ignore in this post).</p>
+<div class="section" id="the-view">
+<h3>The View</h3>
+<div class="highlight"><pre><span></span><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/logs/xhr_fetch_user_logs&quot;</span><span class="p">)</span>
+   <span class="k">def</span> <span class="nf">xhr_fetch_user_logs</span><span class="p">():</span>
+     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     Fetches the user&#39;s logs for display in the table</span>
+<span class="sd">     underneath the log time form.</span>
+<span class="sd">     &quot;&quot;&quot;</span>
+     <span class="n">data</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span>
+
+     <span class="k">if</span> <span class="s2">&quot;user_id&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">session</span><span class="p">:</span>
+         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;user not logged in&quot;</span><span class="p">},</span> <span class="mi">500</span>
+     <span class="k">if</span> <span class="s2">&quot;date&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;no date supplied&quot;</span><span class="p">},</span> <span class="mi">500</span>
+
+     <span class="n">logs</span> <span class="o">=</span> <span class="n">TimeLog</span><span class="o">.</span><span class="n">get_user_logs_for_date</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span>
+
+     <span class="n">total_duration</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">logs</span><span class="p">)</span>
+     <span class="n">total_duration</span> <span class="o">=</span> <span class="n">TimeLog</span><span class="o">.</span><span class="n">format_duration</span><span class="p">(</span><span class="n">total_duration</span><span class="p">)</span>
+
+     <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span>
+         <span class="s2">&quot;logs/partial_log_table.html&quot;</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="n">logs</span><span class="p">,</span> <span class="n">total_duration</span><span class="o">=</span><span class="n">total_duration</span>
+     <span class="p">)</span>
+</pre></div>
+<p>This view is what renders the above template. Hopefully nothing really needs explaining, the query and formatting logic are taken care of by the <tt class="docutils literal">TimeLog</tt> model class.</p>
+</div>
+</div>
+<div class="section" id="the-mithril-way">
+<h2>The Mithril Way</h2>
+<p>To do this the Mithril way, we first need to change that view to return JSON instead of rendering a template. Not a lot needs to change here, we just need
+the TimeLog records as dictionaries instead of iterables, since they won't be consumed by a template anymore.</p>
+<div class="highlight"><pre><span></span><span class="nd">@admin</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/logs/xhr_fetch_user_logs&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">xhr_fetch_user_logs</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetches the user&#39;s logs for display in the table</span>
+<span class="sd">        underneath the log time form.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># ... SNIP ...</span>
+
+        <span class="n">d_logs</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">logs</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">d_logs</span><span class="p">,</span> <span class="s2">&quot;total_duration&quot;</span><span class="p">:</span> <span class="n">total_duration</span><span class="p">})</span>
+</pre></div>
+<p>With that taken care of, we can now start writing some Mithril. I'll be using typescript, but the javascript version will be almost the same, just without
+type hints.</p>
+<p>First off, we need an object which handles keeping a hold of the user's log entries.</p>
+<div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">TimeLog</span> <span class="o">=</span> <span class="p">{</span>
+     <span class="nx">records</span><span class="o">:</span> <span class="p">[],</span>
+     <span class="nx">totalDuration</span>: <span class="kt">0</span><span class="p">,</span>
+     <span class="nx">loadRecords</span>: <span class="kt">function</span><span class="p">(</span><span class="nx">p_date?</span>: <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="nx">m</span><span class="p">.</span><span class="nx">request</span><span class="p">({</span>
+             <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+             <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/admin/logs/xhr_fetch_user_logs&quot;</span><span class="p">,</span>
+             <span class="nx">data</span><span class="o">:</span> <span class="p">{</span><span class="s2">&quot;date&quot;</span><span class="o">:</span> <span class="nx">p_date</span><span class="p">},</span>
+         <span class="p">}).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">result</span><span class="o">:</span> <span class="p">{})</span> <span class="p">{</span>
+             <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">records</span> <span class="o">=</span> <span class="nx">result</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+             <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">totalDuration</span> <span class="o">=</span> <span class="nx">result</span><span class="p">.</span><span class="nx">total_duration</span><span class="p">;</span>
+         <span class="p">})</span>
+     <span class="p">}</span>
+ <span class="p">}</span>
+</pre></div>
+<p>A fairly simple object which has fields for the records and total, and a <tt class="docutils literal">loadRecords</tt> function for grabbing them with an XHR request to our modified endpoint.</p>
+<p>Now we can translate the Jinja partial template into Mithril's format and use Mithril to inject into the same <tt class="docutils literal">user_entries_area</tt> div.</p>
+<div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">LogList</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nx">oninit</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">loadRecords</span><span class="p">();</span>
+        <span class="p">},</span>
+        <span class="nx">view</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;table.time-log-table&quot;</span><span class="p">,</span> <span class="p">[</span>
+                <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;thead&quot;</span><span class="p">,</span> <span class="p">[</span>
+                    <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;tr&quot;</span><span class="p">,</span> <span class="p">[</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="s2">&quot;IP&quot;</span><span class="p">,),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="s2">&quot;Message&quot;</span><span class="p">,),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="s2">&quot;Delete&quot;</span><span class="p">,),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="s2">&quot;Clone&quot;</span><span class="p">,),</span>
+                    <span class="p">])</span>
+                <span class="p">]),</span>
+                <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;tbody&quot;</span><span class="p">,</span> <span class="p">[</span>
+                    <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">records</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">log</span><span class="o">:</span> <span class="p">{})</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;tr&quot;</span><span class="p">,</span> <span class="p">[</span>
+                            <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">ip_name</span><span class="p">),</span>
+                            <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">duration_formatted</span><span class="p">),</span>
+                            <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">message</span><span class="p">),</span>
+                            <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="nx">m</span><span class="p">(</span><span class="sb">`i.fa.fa-trash`</span><span class="p">,</span> <span class="p">{</span>
+                                        <span class="nx">onclick</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+                                            <span class="nx">deleteLog</span><span class="p">(</span><span class="nx">log</span><span class="p">.</span><span class="nx">log_id</span><span class="p">)</span>
+                                        <span class="p">}</span>
+                                      <span class="p">}</span>
+                                    <span class="p">)</span>
+                             <span class="p">),</span>
+                            <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="nx">m</span><span class="p">(</span><span class="sb">`i.fa.fa-copy`</span><span class="p">,</span> <span class="p">{</span>
+                                        <span class="nx">onclick</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+                                              <span class="nx">copyLog</span><span class="p">(</span><span class="nx">log</span><span class="p">.</span><span class="nx">ip_id</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">duration</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">message</span><span class="p">);</span>
+                                        <span class="p">}</span>
+                                      <span class="p">}</span>
+                                    <span class="p">)</span>
+                            <span class="p">),</span>
+                        <span class="p">])</span>
+                    <span class="p">}),</span>
+                    <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;tr&quot;</span><span class="p">,</span> <span class="p">[</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">,</span> <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">totalDuration</span><span class="p">),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">),</span>
+                        <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">),</span>
+                    <span class="p">])</span>
+                <span class="p">])</span>
+            <span class="p">])</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+<p>We create an object called <tt class="docutils literal">LogList</tt> to be our table. When initialised, it tells the <tt class="docutils literal">TimeLog</tt> object to fetch its records via XHR, then uses <tt class="docutils literal">map</tt> to iterate over
+them and create a new table row for each, filling in the cell with information from that record. Once it's done looping, it adds the final row with the total duration.</p>
+<p>Now to use Mithril to render the table, it's as easy as adding <tt class="docutils literal"><span class="pre">m.mount(document.getElementById('user_entries_area'),</span> LogList);</tt>.</p>
+<div class="section" id="replacing-the-form">
+<h3>Replacing the form</h3>
+<p>With proof-of-concept in place that we can render data from XHR requests into HTML, it's time to go all-in and replace the whole page.</p>
+<p>We'll start by translating the main template's form HTML to Mithril, then replacing the form with just another div.</p>
+<div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">LogForm</span> <span class="o">=</span> <span class="p">{</span>
+       <span class="nx">view</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+           <span class="k">return</span> <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;form.edit-form&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;log_time_form&quot;</span><span class="p">},</span> <span class="p">[</span>
+               <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;.form-piece&quot;</span><span class="p">,</span> <span class="p">[</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;Date&quot;</span><span class="p">),</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="nx">id</span><span class="o">:</span> <span class="s2">&quot;date_input&quot;</span><span class="p">,</span> <span class="kd">type</span><span class="o">:</span> <span class="s2">&quot;text&quot;</span><span class="p">}),</span>
+               <span class="p">]),</span>
+
+               <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;.form-piece&quot;</span><span class="p">,</span> <span class="p">[</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;Ip&quot;</span><span class="p">),</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="nx">IpDropdown</span><span class="p">),</span>
+               <span class="p">]),</span>
+
+               <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;.form-piece&quot;</span><span class="p">,</span> <span class="p">[</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;Duration&quot;</span><span class="p">),</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;duration&quot;</span><span class="p">}),</span>
+               <span class="p">]),</span>
+
+               <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;.form-piece&quot;</span><span class="p">,</span> <span class="p">[</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span><span class="p">),</span>
+                   <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;message&quot;</span><span class="p">}),</span>
+               <span class="p">]),</span>
+
+               <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;input.btn.btn-blue&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">value</span><span class="o">:</span> <span class="s2">&quot;Save&quot;</span><span class="p">,</span> <span class="kd">type</span><span class="o">:</span> <span class="s2">&quot;submit&quot;</span><span class="p">})</span>
+           <span class="p">])</span>
+       <span class="p">}</span>
+   <span class="p">}</span>
+</pre></div>
+<p>The form is now in Mithril syntax, but the IP dropdown was giving me problems (mainly due to use of <tt class="docutils literal">choices.js</tt> to make it fancy). I made this into its own component
+to get choices to behave.</p>
+<div class="highlight"><pre><span></span><span class="kd">var</span> <span class="nx">IpDropdown</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nx">choices</span>: <span class="kt">undefined</span><span class="p">,</span>
+        <span class="nx">ips</span><span class="o">:</span> <span class="p">[],</span>
+        <span class="nx">oncreate</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">m</span><span class="p">.</span><span class="nx">request</span><span class="p">({</span>
+                <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+                <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/admin/logs/xhr_get_ips&quot;</span><span class="p">,</span>
+            <span class="p">}).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">result</span><span class="o">:</span> <span class="p">{})</span> <span class="p">{</span>
+                <span class="nx">IpDropdown</span><span class="p">.</span><span class="nx">ips</span> <span class="o">=</span> <span class="nx">result</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+            <span class="p">})</span>
+        <span class="p">},</span>
+        <span class="nx">onupdate</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">dd</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;ip_id&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="nx">dd</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mf">0</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">IpDropdown</span><span class="p">.</span><span class="nx">choices</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">IpDropdown</span><span class="p">.</span><span class="nx">choices</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Choices</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">&#39;select[name=&quot;ip_id&quot;]&#39;</span><span class="p">),</span> <span class="p">{</span><span class="nx">itemSelectText</span><span class="o">:</span> <span class="s1">&#39;&#39;</span><span class="p">,})</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="nx">view</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;select&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">name</span><span class="o">:</span> <span class="s2">&quot;ip_id&quot;</span><span class="p">,</span> <span class="nx">id</span><span class="o">:</span> <span class="s2">&quot;ip_id&quot;</span><span class="p">},</span> <span class="nx">IpDropdown</span><span class="p">.</span><span class="nx">ips</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">ip</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;option&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">value</span>: <span class="kt">ip.ip_id</span><span class="p">},</span> <span class="nx">ip</span><span class="p">.</span><span class="nx">long_name</span><span class="p">)</span>
+            <span class="p">}));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</pre></div>
+<p>The IP Dropdown fetches the IPs (projects) from a simple XHR request which returns them all as json, and uses <tt class="docutils literal">onupdate</tt> to ensure that <tt class="docutils literal">choices.js</tt> only initialises
+when the IPs have loaded, otherwise it will not work.</p>
+<p>Now the form is rewritten I can cut down the template.</p>
+<div class="highlight"><pre><span></span><span class="cp">{%</span> <span class="k">extends</span> <span class="s2">&quot;base.html&quot;</span> <span class="cp">%}</span><span class="x"></span>
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">main</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="x">    &lt;h1&gt;Log Your Time&lt;/h1&gt;</span>
+
+<span class="x">    &lt;div id=&quot;form-target&quot;&gt; &lt;/div&gt;</span>
+
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="cp">{%</span> <span class="k">block</span> <span class="nv">js</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">    &lt;script src=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;static&#39;</span><span class="o">,</span> <span class="nv">filename</span><span class="o">=</span><span class="s1">&#39;js/choices.min.js&#39;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;&lt;/script&gt;</span>
+<span class="x">    &lt;script src=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;static&#39;</span><span class="o">,</span> <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;js/pikday.js&quot;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;&lt;/script&gt;</span>
+<span class="x">    &lt;script src=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;static&#39;</span><span class="o">,</span> <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;js/common.js&quot;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;&lt;/script&gt;</span>
+<span class="x">    &lt;script src=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;static&#39;</span><span class="o">,</span> <span class="nv">filename</span><span class="o">=</span><span class="s1">&#39;js/mithril.min.js&#39;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;&lt;/script&gt;</span>
+<span class="x">    &lt;script src=&quot;</span><span class="cp">{{</span><span class="nv">url_for</span><span class="o">(</span><span class="s1">&#39;static&#39;</span><span class="o">,</span> <span class="nv">filename</span><span class="o">=</span><span class="s2">&quot;js/logs/log_time_form.js&quot;</span><span class="o">)</span><span class="cp">}}</span><span class="x">&quot;&gt;&lt;/script&gt;</span>
+<span class="x">    &lt;/script&gt;</span>
+<span class="cp">{%</span> <span class="k">endblock</span> <span class="cp">%}</span><span class="x"></span>
+</pre></div>
+<p>Since the form is no longer actually &quot;submitting&quot;, but instead calling some javascript function, I had to wrap everything up in a new component and use a hook to
+bind the submit event of the form.</p>
+<div class="highlight"><pre><span></span> <span class="kd">var</span> <span class="nx">LogPage</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">oncreate</span>: <span class="kt">onPageLoad</span><span class="p">,</span>
+    <span class="nx">view</span>: <span class="kt">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">m</span><span class="p">(</span><span class="s2">&quot;wrapper&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nx">m</span><span class="p">(</span><span class="nx">LogForm</span><span class="p">),</span> <span class="nx">m</span><span class="p">(</span><span class="nx">LogList</span><span class="p">)])</span>
+    <span class="p">}</span>
+ <span class="p">}</span>
+
+<span class="kd">function</span> <span class="nx">onPageLoad</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">todayDate</span> <span class="o">=</span> <span class="nx">getFormattedDate</span><span class="p">(</span><span class="k">new</span> <span class="nb">Date</span><span class="p">());</span>
+    <span class="kd">var</span> <span class="nx">dateInput</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;date_input&quot;</span><span class="p">);</span>
+    <span class="nx">dateInput</span><span class="p">.</span><span class="nx">value</span> <span class="o">=</span> <span class="nx">todayDate</span><span class="p">;</span>
+
+    <span class="nx">dateInput</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;change&quot;</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">loadRecords</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+    <span class="p">});</span>
+
+    <span class="kd">var</span> <span class="nx">form</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">forms</span><span class="p">[</span><span class="s2">&quot;log_time_form&quot;</span><span class="p">];</span>
+    <span class="nx">form</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;submit&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+        <span class="kd">var</span> <span class="nx">formData</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">FormData</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+        <span class="nx">m</span><span class="p">.</span><span class="nx">request</span><span class="p">({</span>
+            <span class="nx">url</span><span class="o">:</span> <span class="s2">&quot;/admin/logs/save&quot;</span><span class="p">,</span>
+            <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span>
+            <span class="nx">data</span>: <span class="kt">formData</span><span class="p">,</span>
+        <span class="p">}).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">records</span> <span class="o">=</span> <span class="nx">result</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+            <span class="nx">TimeLog</span><span class="p">.</span><span class="nx">totalDuration</span> <span class="o">=</span> <span class="nx">result</span><span class="p">.</span><span class="nx">total_duration</span><span class="p">;</span>
+        <span class="p">})</span>
+    <span class="p">})</span>
+
+<span class="p">};</span>
+
+<span class="nx">m</span><span class="p">.</span><span class="nx">mount</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;form-target&quot;</span><span class="p">),</span> <span class="nx">LogPage</span><span class="p">)</span>
+</pre></div>
+<p>And with that, the rewrite is complete! When the user changes the date, or adds a new log entry, the table underneath the form will update.</p>
+<p>Overall, I would say I have grown to like Mithril quite a bit. At first I was put off by their template syntax, and I thought it would make everything difficult to read,
+but actually it's not as bad as I thought. Obviously using JSX would be nicer, but I didn't want the hassle of installing some 20GB packager/builder from <tt class="docutils literal">npm</tt> just
+to get a page to render (e.g. Parcel or Webpack).</p>
+<p>This rewrite has sparked a little bit of an interest in frontend frameworks, and I shall use this particular page to explore others in the future.</p>
+</div>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

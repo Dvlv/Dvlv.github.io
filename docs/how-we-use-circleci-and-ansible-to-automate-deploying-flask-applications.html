@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>How we use Circleci and Ansible to Automate Deploying Flask Applications</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/how-we-use-circleci-and-ansible-to-automate-deploying-flask-applications.html" rel="bookmark"
+           title="Permalink to How we use Circleci and Ansible to Automate Deploying Flask Applications">How we use Circleci and Ansible to Automate Deploying Flask Applications</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>At my workplace we like to use CI/CD to automatically deploy any changes to the master branch into production.</p>
+<p>This involves two main pieces of technology - Circleci and Ansible.</p>
+<p>My preferred stack for web development is:</p>
+<ul class="simple">
+<li>Flask</li>
+<li>Postgres</li>
+<li>Uwsgi</li>
+<li>Nginx</li>
+<li>Supervisor</li>
+</ul>
+<p>In this post I'll provide an example of how we implement this for a python application which uses the above technologies.</p>
+<div class="section" id="our-deployment-and-rollback-process">
+<h2>Our Deployment and Rollback Process</h2>
+<p>We deploy our applications by copying over the contents of the github repository via rsync. We first set up a parent folder somewhere on the system, such as <tt class="docutils literal">/var/www/project_name</tt>. Inside this folder we maintain two more folders: <tt class="docutils literal">builds</tt> and <tt class="docutils literal">current</tt>. Our nginx is then pointed to <tt class="docutils literal">/var/www/project_name/current</tt>. However, <tt class="docutils literal">current</tt> is not actually a folder, it is a symlink to the latest build inside our <tt class="docutils literal">builds</tt> folder.</p>
+<p>This allows us to very quickly undo a deployment by just updating the <tt class="docutils literal">current</tt> symlink to an older build and restarting our web server.</p>
+<p>All of this is done automatically using Ansible.</p>
+</div>
+<div class="section" id="ansible">
+<h2>Ansible</h2>
+<p>The first thing to do is to set up ansible. We typically create a folder named <tt class="docutils literal">ansible</tt> inside the project's repo. We can then begin with the <tt class="docutils literal">hosts</tt> file, which holds information about our live server.</p>
+<div class="section" id="ansible-hosts">
+<h3>ansible/hosts</h3>
+<div class="highlight"><pre><span></span><span class="p p-Indicator">[</span><span class="nv">web</span><span class="p p-Indicator">]</span>
+<span class="l l-Scalar l-Scalar-Plain">our.url.com</span>
+
+<span class="l l-Scalar l-Scalar-Plain">[web:vars]</span>
+<span class="l l-Scalar l-Scalar-Plain">ansible_ssh_private_key_file=~/.ssh/id_rsa</span>
+<span class="l l-Scalar l-Scalar-Plain">ansible_user=circleci</span>
+</pre></div>
+<p>With this information set up, we now need to define some variables which will be used throughout our playbook. The <tt class="docutils literal">/path/to/project</tt> bits will be replaced with the file path at which we will store the repository on our live server.</p>
+</div>
+<div class="section" id="ansible-group-vars-all">
+<h3>ansible/group_vars/all</h3>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+
+<span class="nt">project_root</span><span class="p">:</span> <span class="s">&quot;/path/to/project&quot;</span>
+<span class="nt">project_source</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">playbook_dir</span><span class="nv"> </span><span class="s">}}/..&quot;</span>
+<span class="nt">builds_dir</span><span class="p">:</span> <span class="s">&quot;/path/to/project/builds&quot;</span>
+<span class="nt">current_release_dir</span><span class="p">:</span> <span class="s">&quot;/path/to/project/current&quot;</span>
+<span class="nt">excludes_file</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">playbook_dir</span><span class="nv"> </span><span class="s">}}/rsync_excludes&quot;</span>
+<span class="nt">keep_releases</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+</pre></div>
+<p>With the variables taken care of, we now need a playbook to execute.</p>
+</div>
+<div class="section" id="ansible-deployment-yml">
+<h3>ansible/deployment.yml</h3>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Deploy</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">production&quot;</span>
+  <span class="nt">any_errors_fatal</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="nt">hosts</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+  <span class="nt">roles</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="nt"> role</span><span class="p">:</span> <span class="nv">deploy</span><span class="p p-Indicator">,</span><span class="nt"> become</span><span class="p">:</span> <span class="nv">yes</span> <span class="p p-Indicator">}</span>
+</pre></div>
+<p>Our playbook calls one role. This role will look as follows (large file ahead):</p>
+</div>
+<div class="section" id="ansible-roles-deploy-tasks-main-yml">
+<h3>ansible/roles/deploy/tasks/main.yml</h3>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Register</span><span class="nv"> </span><span class="s">Build</span><span class="nv"> </span><span class="s">Time&quot;</span>
+  <span class="nt">command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">date +%Y%m%d%H%M%S</span>
+  <span class="nt">run_once</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="nt">register</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">build_time</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">set_fact</span><span class="p">:</span>
+    <span class="nt">build_dir</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">builds_dir</span><span class="nv"> </span><span class="s">}}/{{build_time.stdout}}&quot;</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Create</span><span class="nv"> </span><span class="s">build</span><span class="nv"> </span><span class="s">directory&quot;</span>
+  <span class="nt">file</span><span class="p">:</span>
+    <span class="nt">path</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">build_dir</span><span class="nv"> </span><span class="s">}}&quot;</span>
+    <span class="nt">state</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">directory</span>
+    <span class="nt">mode</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0755</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Rsync</span><span class="nv"> </span><span class="s">repo</span><span class="nv"> </span><span class="s">content</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">build</span><span class="nv"> </span><span class="s">directory&quot;</span>
+  <span class="nt">synchronize</span><span class="p">:</span>
+    <span class="nt">src</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">project_source</span><span class="nv"> </span><span class="s">}}&quot;</span>
+    <span class="nt">dest</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">build_dir</span><span class="nv"> </span><span class="s">}}&quot;</span>
+    <span class="nt">rsync_opts</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="s">&quot;--exclude-from={{</span><span class="nv"> </span><span class="s">excludes_file</span><span class="nv"> </span><span class="s">}}&quot;</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">stat</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path={{ current_release_dir }}</span>
+  <span class="nt">register</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">link</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">debug</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">msg=&quot;Current release symlink exists&quot;</span>
+  <span class="nt">when</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">link.stat.islnk is defined and link.stat.islnk</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Create</span><span class="nv"> </span><span class="s">checksum</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">current</span><span class="nv"> </span><span class="s">requirements.txt</span><span class="nv"> </span><span class="s">file&quot;</span>
+  <span class="nt">shell</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">md5sum {{ current_release_dir }}/requirements.txt | awk &#39;{print $1}&#39; &gt; {{ project_root }}/old_requirements.checksum</span>
+  <span class="nt">when</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">link.stat.islnk is defined and link.stat.islnk</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Create</span><span class="nv"> </span><span class="s">checksum</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">new</span><span class="nv"> </span><span class="s">build</span><span class="nv"> </span><span class="s">requirements.txt</span><span class="nv"> </span><span class="s">file&quot;</span>
+  <span class="nt">shell</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">md5sum {{ build_dir }}/requirements.txt | awk &#39;{print $1}&#39; &gt; {{ project_root }}/new_requirements.checksum</span>
+  <span class="nt">when</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">link.stat.islnk is defined and link.stat.islnk</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Check</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">checksum</span><span class="nv"> </span><span class="s">changes&quot;</span>
+  <span class="nt">shell</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">diff {{ project_root }}/old_requirements.checksum {{ project_root }}/new_requirements.checksum</span>
+  <span class="nt">register</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">req_diff</span>
+  <span class="nt">when</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">link.stat.islnk is defined and link.stat.islnk</span>
+  <span class="nt">ignore_errors</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">debug</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">msg=&quot;Changes detected&quot;</span>
+  <span class="nt">when</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">req_diff.rc is defined and req_diff.rc == 1</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Create</span><span class="nv"> </span><span class="s">build</span><span class="nv"> </span><span class="s">virtualenv&quot;</span>
+  <span class="nt">command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">python3.6 -m venv {{ build_dir }}/env</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Pip</span><span class="nv"> </span><span class="s">wheel</span><span class="nv"> </span><span class="s">requirements&quot;</span>
+  <span class="nt">command</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">python3.6 -m pip wheel --wheel-dir={{ project_root }}/wheels -r {{ build_dir }}/requirements.txt</span>
+  <span class="nt">when</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">req_diff.rc is not defined or (req_diff.rc is defined and req_diff.rc == 1)</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Install</span><span class="nv"> </span><span class="s">requirements</span><span class="nv"> </span><span class="s">on</span><span class="nv"> </span><span class="s">new</span><span class="nv"> </span><span class="s">build</span><span class="nv"> </span><span class="s">virtualenv&quot;</span>
+  <span class="nt">pip</span><span class="p">:</span>
+    <span class="nt">requirements</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">build_dir</span><span class="nv"> </span><span class="s">}}/requirements.txt&quot;</span>
+    <span class="nt">virtualenv</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">build_dir</span><span class="nv"> </span><span class="s">}}/env&quot;</span>
+    <span class="nt">extra_args</span><span class="p">:</span> <span class="s">&quot;--use-wheel</span><span class="nv"> </span><span class="s">--no-index</span><span class="nv"> </span><span class="s">--find-links={{project_root}}/wheels&quot;</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Update</span><span class="nv"> </span><span class="s">current</span><span class="nv"> </span><span class="s">release</span><span class="nv"> </span><span class="s">symlink&quot;</span>
+  <span class="nt">file</span><span class="p">:</span>
+    <span class="nt">state</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">link</span>
+    <span class="nt">force</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+    <span class="nt">path</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">current_release_dir</span><span class="nv"> </span><span class="s">}}&quot;</span>
+    <span class="nt">src</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">build_dir</span><span class="nv"> </span><span class="s">}}&quot;</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Reload</span><span class="nv"> </span><span class="s">UWSGI&quot;</span>
+  <span class="nt">supervisorctl</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;uwsgi&quot;</span>
+    <span class="nt">state</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">restarted</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Cleanup</span><span class="nv"> </span><span class="s">old</span><span class="nv"> </span><span class="s">releases&quot;</span>
+  <span class="nt">shell</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ls -1dt {{ builds_dir }}/* | tail -n +{{ keep_releases | int + 2 }} | xargs rm -rf</span>
+  <span class="nt">when</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">keep_releases &gt; 0</span>
+</pre></div>
+<p>That's a lot to take in. Let's go over it step by step.</p>
+<ul class="simple">
+<li><strong>Register build time</strong> - Gets a string representing the current date and time. This is used as the folder name. (More on this later).</li>
+<li><strong>Create build directory</strong> - Creates a folder under <tt class="docutils literal">builds</tt> named after our build time.</li>
+<li><strong>Rsync content to build directory</strong> - self explanitory.</li>
+<li><strong>Create checksums from requirements.txt files</strong> - If we have an old release, we grab its <tt class="docutils literal">requirements.txt</tt> file and generate an md5 hash. We then do the same for our current <tt class="docutils literal">requirements.txt</tt>. This allows us to check if our requirements have changed since the last deploy.</li>
+<li><strong>Check for checksum changes</strong> - Check if the two md5 hashes are different. This is then stored in <tt class="docutils literal">req_diff</tt>.</li>
+<li><strong>Create build virtualenv</strong> - Self explanitory</li>
+<li><strong>Pip wheel requirements</strong> - If our checksums differ, our requirements have updated. We need to download them as wheel files into our <tt class="docutils literal">wheels</tt> directory.</li>
+<li><strong>Install requirements on new build virtualenv</strong> - Installs everything in our wheels directory into our virtualenv.</li>
+<li><strong>Update current release symlink</strong> - Symlinks the <tt class="docutils literal">current</tt> folder in the project root to point to our latest build folder.</li>
+<li><strong>Reload Uwsgi</strong> - Calls upon supervisor to restart our uwsgi process.</li>
+<li><strong>Cleanup old releases</strong> - Deletes old copies of the repo from the <tt class="docutils literal">builds</tt> directory, leaving us with only the most recent 5.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="circleci">
+<h2>Circleci</h2>
+<p>Now that we have a playbook which will deploy our website to its live server, we need to use Circleci to make this happen automatically whenever someone pushes to the master branch on Github.</p>
+<p>After telling Circleci about our project, we add the following file to the <tt class="docutils literal">.circleci</tt> folder inside our repo.</p>
+<div class="section" id="circleci-config-yml">
+<h3>.circleci/config.yml</h3>
+<div class="highlight"><pre><span></span><span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="nt">build</span><span class="p">:</span>
+    <span class="nt">docker</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">circleci/python:3.6.2</span>
+      <span class="p p-Indicator">-</span> <span class="nt">image</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">circleci/postgres:9.6.2</span>
+        <span class="nt">environment</span><span class="p">:</span>
+          <span class="nt">POSTGRES_USER</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;user&gt;</span>
+          <span class="nt">POSTGRES_DB</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;db&gt;</span>
+          <span class="nt">PGPASSWORD</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;pw&gt;</span>
+    <span class="nt">environment</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">ANSIBLE_HOST_KEY_CHECKING</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">False</span>
+      <span class="p p-Indicator">-</span> <span class="nt">ANSIBLE_LOCAL_TEMP</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/home/circleci/.ansible/tmp</span>
+      <span class="p p-Indicator">-</span> <span class="nt">ANSIBLE_REMOTE_TEMP</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/home/circleci/.ansible/tmp</span>
+    <span class="nt">steps</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">checkout</span>
+    <span class="p p-Indicator">-</span> <span class="nt">restore_cache</span><span class="p">:</span>
+        <span class="nt">keys</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">deps-{{ checksum &quot;requirements.txt&quot; }}</span>
+    <span class="p p-Indicator">-</span> <span class="nt">run</span><span class="p">:</span>
+        <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Install Dependencies</span>
+        <span class="nt">command</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+            <span class="no">python3 -m venv env</span>
+            <span class="no">. env/bin/activate</span>
+            <span class="no">pip install ansible</span>
+            <span class="no">pip install -r requirements.txt</span>
+            <span class="no">sudo apt update</span>
+            <span class="no">sudo apt install rsync</span>
+    <span class="p p-Indicator">-</span> <span class="nt">save_cache</span><span class="p">:</span>
+        <span class="nt">key</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">deps-{{ checksum &quot;requirements.txt&quot; }}</span>
+        <span class="nt">paths</span><span class="p">:</span>
+            <span class="p p-Indicator">-</span> <span class="s">&quot;env&quot;</span>
+    <span class="p p-Indicator">-</span> <span class="nt">run</span><span class="p">:</span>
+        <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Run Tests</span>
+        <span class="nt">command</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+            <span class="no">. env/bin/activate</span>
+            <span class="no">export PYTHONPATH=.</span>
+            <span class="no">export TEST_MODE=1</span>
+            <span class="no">pytest -vs</span>
+    <span class="p p-Indicator">-</span> <span class="nt">store_artifacts</span><span class="p">:</span>
+        <span class="nt">path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test-reports</span>
+        <span class="nt">destination</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test-reports</span>
+
+    <span class="p p-Indicator">-</span> <span class="nt">run</span><span class="p">:</span>
+      <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deploy to production</span>
+      <span class="nt">command</span><span class="p">:</span> <span class="p p-Indicator">|</span>
+        <span class="no">. env/bin/activate</span>
+        <span class="no">ansible-playbook -i ansible/hosts ansible/deployment.yml</span>
+
+<span class="nt">workflows</span><span class="p">:</span>
+  <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+  <span class="nt">build</span><span class="p">:</span>
+    <span class="nt">jobs</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">build</span><span class="p">:</span>
+          <span class="nt">filters</span><span class="p">:</span>
+            <span class="nt">branches</span><span class="p">:</span>
+              <span class="nt">only</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">master</span>
+</pre></div>
+<p>This configuration will cause Circleci to spawn two containers - one for python and one for postgres. We set some enviroment variables to allow our postgres database to function, and let ansible play nicely with circleci.</p>
+<p>We leverage the ability to store our <tt class="docutils literal">env</tt> folder against the checksum of <tt class="docutils literal">requirements.txt</tt>, preventing the need to reinstall all of our external packages on each deploy (unless the requirements are updated).</p>
+<p>After installing dependencies, we run our unit tests via <tt class="docutils literal">pytest</tt> then call our ansible playbook to deploy.</p>
+</div>
+</div>
+<div class="section" id="rolling-back">
+<h2>Rolling Back</h2>
+<p>If a deployment passes all of its unit tests but is somehow catastrophically broken, we can use Ansible to roll back to a previous release.</p>
+<div class="section" id="ansible-rollback-yml">
+<h3>ansible/rollback.yml</h3>
+<div class="highlight"><pre><span></span><span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Revert</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">build&quot;</span>
+  <span class="nt">any_errors_fatal</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="nt">hosts</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">web</span>
+  <span class="nt">roles</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="p p-Indicator">{</span><span class="nt"> role</span><span class="p">:</span> <span class="nv">revert_web_build</span><span class="p p-Indicator">,</span><span class="nt"> become</span><span class="p">:</span> <span class="nv">true</span> <span class="p p-Indicator">}</span>
+</pre></div>
+<p>Another playbook which calls a single role.</p>
+</div>
+<div class="section" id="ansible-roles-revert-web-build-tasks-main-yml">
+<h3>ansible/roles/revert_web_build/tasks/main.yml</h3>
+<div class="highlight"><pre><span></span>  <span class="l l-Scalar l-Scalar-Plain">---</span>
+
+<span class="l l-Scalar l-Scalar-Plain">- name</span><span class="p p-Indicator">:</span> <span class="s">&quot;Determine</span><span class="nv"> </span><span class="s">penultimate</span><span class="nv"> </span><span class="s">build&quot;</span>
+  <span class="nt">shell</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ls -d /path/to/project/builds/* | tail -n +{{ keep_releases }} | head -1</span>
+  <span class="nt">register</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">penultimate_build</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Update</span><span class="nv"> </span><span class="s">current</span><span class="nv"> </span><span class="s">release</span><span class="nv"> </span><span class="s">symlink&quot;</span>
+  <span class="nt">file</span><span class="p">:</span>
+      <span class="nt">state</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">link</span>
+      <span class="nt">force</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+      <span class="nt">path</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">current_web_release_dir</span><span class="nv"> </span><span class="s">}}&quot;</span>
+      <span class="nt">src</span><span class="p">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">penultimate_build.stdout</span><span class="nv"> </span><span class="s">}}&quot;</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Reload</span><span class="nv"> </span><span class="s">supervisord&quot;</span>
+  <span class="nt">service</span><span class="p">:</span>
+      <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;supervisord&quot;</span>
+      <span class="nt">state</span><span class="p">:</span> <span class="s">&quot;reloaded&quot;</span>
+
+<span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="s">&quot;Restart</span><span class="nv"> </span><span class="s">uwsgi&quot;</span>
+  <span class="nt">command</span><span class="p">:</span> <span class="s">&quot;supervisorctl</span><span class="nv"> </span><span class="s">restart</span><span class="nv"> </span><span class="s">uwsgi&quot;</span>
+</pre></div>
+<p>This role finds the previous build in our <tt class="docutils literal">builds</tt> folder then updates the <tt class="docutils literal">current</tt> symlink to point at it. It finishes off by restarting uwsgi to update the web server.</p>
+<p>Now if a panic ensues, a developer simply needs to run <tt class="docutils literal"><span class="pre">ansible-playbook</span> <span class="pre">-i</span> ansible/hosts ansible/rollback.yml</tt> and a deployment will be reversed while a fix is worked on.</p>
+</div>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

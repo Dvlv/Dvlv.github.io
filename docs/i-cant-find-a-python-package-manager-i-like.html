@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>I Can't Find a Python Package Manager I Like</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/i-cant-find-a-python-package-manager-i-like.html" rel="bookmark"
+           title="Permalink to I Can't Find a Python Package Manager I Like">I Can't Find a Python Package Manager I Like</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>As I make more and more projects at work using our typical flask / peewee / uwsgi / nginx stack, I end up repeating a lot of the more boilerplate-y stuff.</p>
+<p>One of these things is managing dependencies amongst multiple environments, namely development, CI / CD, and production.</p>
+<p>Obviously python comes with <tt class="docutils literal">pip</tt> to handle this, and it <em>works</em>, but it doesn't fully meet my desires.</p>
+<p>I'll start off by explaining the problems I have, what my ideal package manager would do, and then go over why each option I've found doesn't seem to quite meet all of its features.</p>
+<div class="section" id="problems">
+<h2>Problems</h2>
+<ul class="simple">
+<li>Unnecessary packages are build every time we run CI/CD (main culprit is <tt class="docutils literal">uwsgi</tt> which takes quite some time to install).</li>
+<li>Uncecessary packages are installed to live (e.g. <tt class="docutils literal">pytest</tt>).</li>
+<li>Packages experimented with can easily end up in our live dependencies.</li>
+</ul>
+</div>
+<div class="section" id="my-ideal-package-manager">
+<h2>My Ideal Package Manager</h2>
+<ul class="simple">
+<li>Seperate, named environments (arbitrarily).</li>
+<li>Ability to include or exclude a package on a particular named environment.</li>
+<li>Reproducible builds.</li>
+<li>Clean CLI interface.</li>
+<li>Easy ability to include local wheels.</li>
+</ul>
+<p>Upon writing this, it's become clearer to me that my requirements aren't actually as much as I'd thought. I think the first and second are the main two which aren't currently met however.</p>
+<p>With that listed, I'll now go over various solutions I've found and say where they do and don't meet my needs.</p>
+</div>
+<div class="section" id="pip">
+<h2>Pip</h2>
+<p>All python projects at my workplace are using the standard pip workflow to manage dependencies at the moment.</p>
+<p>Pip obviously meets the reproducible builds requirement via <tt class="docutils literal">pip install <span class="pre">-r</span> requirements.txt</tt>, and has a nice CLI interface.</p>
+<p>It seems to be the only tool which allows easy use of local wheels, which is a crucial part of keeping our deploy times as low as possible.</p>
+<p>Separate named environments is where pip falls down. Technically I could create <tt class="docutils literal">requirements.txt</tt>, <tt class="docutils literal"><span class="pre">requirements-dev.txt</span></tt> and <tt class="docutils literal"><span class="pre">requirments-ci.txt</span></tt> manually, and get people
+to install these manually when being introduced to the project, but this is far from optimal. What's a bigger problem with this approach is updating requirements as time goes on.</p>
+<p>When we add features which require new dependencies, we typically just use <tt class="docutils literal">pip freeze &gt; requirements.txt</tt> to add these to the requirements list. This is already problematic
+as it means if we install a dependency via <tt class="docutils literal">pip install</tt> but never actually add it to the codebase, this dependency will make it into the requirements file unless we
+rememeber to uninstall it from our local virtualenv before the next <tt class="docutils literal">pip freeze</tt>.</p>
+<p>I <em>could</em> try to convince people to install new dependencies by manually adding a line to <tt class="docutils literal">requirements.txt</tt> then using <tt class="docutils literal">pip install <span class="pre">-r</span> requirements.txt</tt> to install it,
+but then we would lose the version locking (not to mention it's a bit more long-winded than a single cli command).</p>
+</div>
+<div class="section" id="pipenv">
+<h2>Pipenv</h2>
+<p><a class="reference external" href="https://pypi.org/project/pipenv/">Pipenv</a> doesn't seem to solve many of the problems with <tt class="docutils literal">pip</tt> aside from the introduction of allowing separate dev dependencies. This is nice, but I still need CI-only dependencies too,
+as well as a way to exclude in some way.</p>
+<p>Pipenv is also quite slow, and needs a particular command to install <tt class="docutils literal">black</tt>, which we use for our formatting standards, because there currently only exists beta-level versions.</p>
+</div>
+<div class="section" id="poetry">
+<h2>Poetry</h2>
+<p>I haven't given <a class="reference external" href="https://python-poetry.org/">poetry</a> as much time as Pipenv because it was buggy when I tried it out. I can't say I'm a huge fan of the <tt class="docutils literal">pyproject.toml</tt> thing, but that might
+be because I don't distribute packages.</p>
+<p>I still don't see a way to have arbitrary requirement categories to let me separate out dev, ci and production requirements.</p>
+</div>
+<div class="section" id="honorable-mentions">
+<h2>Honorable Mentions</h2>
+<p>I also checked out <a class="reference external" href="https://github.com/dephell/dephell">dephell</a> and <a class="reference external" href="https://pypi.org/project/pyflow/">pyflow</a> and neither of those seemed to solve anything new.</p>
+</div>
+<div class="section" id="my-partial-solution">
+<h2>My (Partial) Solution</h2>
+<p>The project I found with the most promise was <a class="reference external" href="https://github.com/jazzband/pip-tools">pip-tools</a>. This awkwardly splits management into two separate commands, <tt class="docutils literal"><span class="pre">pip-compile</span></tt> and <tt class="docutils literal"><span class="pre">pip-sync</span></tt>, but it made splitting
+dependencies into arbitrary groups a bit smoother.</p>
+<p>What <tt class="docutils literal"><span class="pre">pip-tools</span></tt> lacks is the simple command line interface, but that's a gap I can fill myself. I've created a command line tool, creatively called <a class="reference external" href="https://github.com/Dvlv/pip-tools-helper">pip-tools-helper</a>
+which now allows me to add requirements to arbitrary environments.</p>
+<p>The whole using-local-wheels thing becomes a non-issue, since <tt class="docutils literal"><span class="pre">pip-tools</span></tt> functions so much like the normal <tt class="docutils literal">pip</tt> that I can keep the old <tt class="docutils literal">pip</tt> command in our ansible
+scripts to use local wheel files.</p>
+<p><tt class="docutils literal"><span class="pre">pip-tools</span></tt> also doesn't try to reinvent virtualenvs, so all of our behaviour in that area can also stay the same.</p>
+<p>Now, to try out a package without having to remember to remove it from the requirements, we can just source the virtualenv and use regular <tt class="docutils literal">pip install</tt> to play around wih it.</p>
+<p>If we decide to keep the requirement, it can be added to the persistence files with <tt class="docutils literal">pth install</tt>.</p>
+<p>The one problem I have not managed to solve is the removal of packages on a particular install. Namely, since <tt class="docutils literal">uwsgi</tt> is in our production <tt class="docutils literal">requirements.txt</tt> it will keep
+installing on our CI containers. I assume there could be some way of handling this without having to make the CI requirements contain almost all of the production requirements
+as well as CI-only ones, but I am yet to come up with a solution which does not involve running some form of <tt class="docutils literal">sed /uwsgi/d</tt> in our CI script.</p>
+<p>For now though, this is the best I have come up with. It's only in use for projects I manage alone, so I am yet to test it out on co-workers.</p>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

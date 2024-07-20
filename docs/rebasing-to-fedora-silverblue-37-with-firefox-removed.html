@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Rebasing to Fedora Silverblue 37 With Firefox Removed</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/rebasing-to-fedora-silverblue-37-with-firefox-removed.html" rel="bookmark"
+           title="Permalink to Rebasing to Fedora Silverblue 37 With Firefox Removed">Rebasing to Fedora Silverblue 37 With Firefox Removed</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <h2 id="tldr">TL;DR</h2>
+<pre><code class="language-bash">rpm-ostree override reset firefox
+(reboot)
+rpm-ostree rebase fedora:fedora/37/x86_64/silverblue
+(reboot)
+rpm-ostree override remove firefox firefox-langpacks
+</code></pre>
+<h2 id="explanation">Explanation</h2>
+<p>With Fedora 37, the Firefox package has been split into two, <code>firefox</code> and <code>firefox-langpacks</code>.</p>
+<p>Some people choose to remove the base Firefox in favour of the Flatpak, but this will cause an error like the following when trying to rebase:</p>
+<pre><code class="language-bash">error: Could not depsolve transaction; 1 problem detected:
+ Problem: package firefox-langpacks-106.0.4-1.fc37.x86_64 requires firefox = 106.0.4-1.fc37, but none of the providers can be installed
+  - conflicting requests
+</code></pre>
+<p>The easiest solution to this is to re-add the base Firefox, then rebase, then remove it (along with the langpacks) afterwards.</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

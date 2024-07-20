@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Running Flask Tests In Parallell with Pytest</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/running-flask-tests-in-parallell-with-pytest.html" rel="bookmark"
+           title="Permalink to Running Flask Tests In Parallell with Pytest">Running Flask Tests In Parallell with Pytest</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>I like having high test coverage when building websites at work, but the more tests I write, the slower the suite becomes to run. This not
+only could discourage other team members from running the test suites themselves, but it also increases the time it takes for CI/CD to
+deploy changes after we push them live.</p>
+<p>To speed this up there are pytest plugins like <tt class="docutils literal"><span class="pre">pytest-xdist</span></tt> and <tt class="docutils literal"><span class="pre">pytest-parallell</span></tt> to run multiple tests concurrently. In the context of
+a flask application with a database connection, however, these are not going to work straight away.</p>
+<p>To illustrate the problem, let's look at a hypothetical integration test:</p>
+<div class="highlight"><pre><span></span><span class="nd">@with_test_db</span><span class="p">((</span><span class="n">User</span><span class="p">,</span> <span class="n">UserRole</span><span class="p">,))</span>
+<span class="k">def</span> <span class="nf">test_create_user_post_creates_user_and_assigns_default_role</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">User</span><span class="o">.</span><span class="n">select</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">assert</span> <span class="n">UserRole</span><span class="o">.</span><span class="n">select</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="n">user_data</span> <span class="o">=</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">testing_app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/users/create&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">user_data</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+    <span class="k">assert</span> <span class="n">User</span><span class="o">.</span><span class="n">select</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">UserRole</span><span class="o">.</span><span class="n">select</span><span class="p">()</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">UserRole</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;basic&quot;</span>
+</pre></div>
+<p>(You can read about the <a class="reference external" href="https://www.dvlv.co.uk/a-super-helpful-decorator-for-peeweeflask-unit-testing.html">with_test_db decorator in my blog post here</a> )</p>
+<p>The above test would work no problem when run against a clean database, but each assert could fail if another process has updated the
+database before this test has had a chance to fully run. This was a blocker for a while in my attempts to speed up the test suites
+for a few flask projects.</p>
+<p>This week I managed to get around it, and the tests now take around 1/3rd the amount of time to run.</p>
+<div class="section" id="the-initial-set-up">
+<h2>The initial set-up</h2>
+<p>Python projects at work use Flask as the web framework and Peewee as the database ORM.</p>
+<p>Each developer had postgres set up on either their laptop or a VM. For each project which ran unit tests they would be required to create a
+user called <tt class="docutils literal">&lt;project_name&gt;_test</tt> and an empty database with the same name, and grant that user all privileges on the database.</p>
+<p>Between each test, this database has the necessary tables created and dropped by a context manager provided by Peewee. This is provided by
+the <tt class="docutils literal">with_test_db</tt> decorator defined in a file which lives at <tt class="docutils literal">tests/helpers.py</tt>.</p>
+</div>
+<div class="section" id="the-solution">
+<h2>The Solution</h2>
+<p>Each process created needs its own database which it can populate and tear down between each individual test. This required finding a way to
+get pytest to run some code at the beginning and end of the entire test suite, separately per process.</p>
+<p>Luckily this is very trivial, and is done using a <tt class="docutils literal">conftest.py</tt> file in the root of the project directory.</p>
+<p>Inside this file, we need to make a <a class="reference external" href="https://docs.pytest.org/en/2.8.7/fixture.html">pytest fixture</a> which will run at the &quot;session&quot; scope, and
+be automatically used by each test.</p>
+<p>The set-up fixture needs to create a randomly-named database for its process, and pass this along to <tt class="docutils literal">with_test_db</tt> so that it can be used to
+run all tests assigned to this particular process, and cleaned in between.</p>
+<p>The tear-down step of the fixture just needs to drop this database, since we don't want them hanging around.</p>
+<p>Here's a full dump of a <tt class="docutils literal">conftest.py</tt> file from one of my projects, with the project name removed:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">psycopg2</span>
+<span class="kn">from</span> <span class="nn">psycopg2.sql</span> <span class="kn">import</span> <span class="n">SQL</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+
+<span class="kn">from</span> <span class="nn">tests</span> <span class="kn">import</span> <span class="n">helpers</span> <span class="k">as</span> <span class="n">test_helpers</span>
+
+<span class="n">DB_HOST</span> <span class="o">=</span> <span class="n">test_helpers</span><span class="o">.</span><span class="n">DB_HOST</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_cursor</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets a psycopg2 cursor for the parent Database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+        <span class="n">dbname</span><span class="o">=</span><span class="s2">&quot;project_test&quot;</span><span class="p">,</span>
+        <span class="n">user</span><span class="o">=</span><span class="s2">&quot;project_test&quot;</span><span class="p">,</span>
+        <span class="n">password</span><span class="o">=</span><span class="s2">&quot;project_test&quot;</span><span class="p">,</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">DB_HOST</span>
+    <span class="p">)</span>
+
+    <span class="n">conn</span><span class="o">.</span><span class="n">set_isolation_level</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">create_database</span><span class="p">(</span><span class="n">db_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">get_cursor</span><span class="p">()</span>
+
+    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">SQL</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;create database </span><span class="si">{</span><span class="n">db_name</span><span class="si">}</span><span class="s2">;&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">SQL</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;grant all privileges on database </span><span class="si">{</span><span class="n">db_name</span><span class="si">}</span><span class="s2"> to project_test;&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">drop_database</span><span class="p">(</span><span class="n">db_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">get_cursor</span><span class="p">()</span>
+
+    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="n">SQL</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;drop database </span><span class="si">{</span><span class="n">db_name</span><span class="si">}</span><span class="s2">;&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_random_db</span><span class="p">():</span>
+    <span class="n">time_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">()</span>
+    <span class="n">pref</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1111</span><span class="p">,</span> <span class="mi">9999</span><span class="p">)</span>
+
+    <span class="n">random_db</span> <span class="o">=</span> <span class="s2">&quot;project_test_&quot;</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">time_str</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pref</span><span class="p">)])</span>
+    <span class="n">create_database</span><span class="p">(</span><span class="n">random_db</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">random_db</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;session&quot;</span><span class="p">,</span> <span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">use_random_db</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Forces each parallell worker to generate and use their own random DB.</span>
+<span class="sd">    This is the key to letting us test in parallell!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rand_db</span> <span class="o">=</span> <span class="n">create_random_db</span><span class="p">()</span>
+    <span class="n">test_helpers</span><span class="o">.</span><span class="n">random_db_name</span> <span class="o">=</span> <span class="n">rand_db</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> creating db &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rand_db</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">after_all_worker_tests</span><span class="p">():</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> dropping db &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rand_db</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">drop_database</span><span class="p">(</span><span class="n">rand_db</span><span class="p">)</span>
+
+    <span class="n">request</span><span class="o">.</span><span class="n">addfinalizer</span><span class="p">(</span><span class="n">after_all_worker_tests</span><span class="p">)</span>
+</pre></div>
+<p>Here we define a fixture called <tt class="docutils literal">use_random_db</tt> which creates a long, randomly-named database via <tt class="docutils literal">psycopg2</tt> and logs a message to the
+console letting us know. This random name is then passed to the <tt class="docutils literal">tests/helpers</tt> module for use in <tt class="docutils literal">with_test_db</tt>.</p>
+<p>The <tt class="docutils literal">after_all_worker_tests</tt> teardown is added as a finalizer, which will log that it is removing the database and then do so using <tt class="docutils literal">psycopg2</tt>.</p>
+<p>Hopefully this is all self-explanitory.</p>
+<p>Once I had figured that out, I had to make some small changes to my <tt class="docutils literal">tests/helpers.py</tt> file to accommodate for using the random database:</p>
+<div class="highlight"><pre><span></span><span class="n">random_db_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># &quot;global&quot; variable set by conftest.py</span>
+
+<span class="k">def</span> <span class="nf">with_test_db</span><span class="p">(</span><span class="n">dbs</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">test_db_closure</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">db_name</span> <span class="o">=</span> <span class="n">random_db_name</span> <span class="ow">or</span> <span class="s2">&quot;project_test&quot;</span>
+
+            <span class="n">test_db</span> <span class="o">=</span> <span class="n">PostgresqlDatabase</span><span class="p">(</span>
+                <span class="n">db_name</span><span class="p">,</span>
+                <span class="n">user</span><span class="o">=</span><span class="s2">&quot;project_test&quot;</span><span class="p">,</span>
+                <span class="n">password</span><span class="o">=</span><span class="s2">&quot;project_test&quot;</span><span class="p">,</span>
+                <span class="n">host</span><span class="o">=</span><span class="n">DB_HOST</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">test_db</span><span class="o">.</span><span class="n">bind_ctx</span><span class="p">(</span><span class="n">dbs</span><span class="p">):</span>
+                <span class="n">test_db</span><span class="o">.</span><span class="n">create_tables</span><span class="p">(</span><span class="n">dbs</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="n">test_db</span><span class="o">.</span><span class="n">drop_tables</span><span class="p">(</span><span class="n">dbs</span><span class="p">)</span>
+                    <span class="n">test_db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">test_db_closure</span>
+
+    <span class="k">return</span> <span class="n">decorator</span>
+</pre></div>
+<p>This decorator will now use the module-level variable <tt class="docutils literal">random_db_name</tt> set by <tt class="docutils literal">conftest.py</tt> to pull in the name of this particular process'
+database. Since this module exists separately in each process created by <tt class="docutils literal"><span class="pre">pytest-xdist</span></tt> the random names will be different in each one.</p>
+<p>Note that I am not super-keen on the cross-module variable <tt class="docutils literal">random_db_name</tt>, and if <tt class="docutils literal">tests/helpers</tt> wasn't already fully woven into my test
+files I would probably define <tt class="docutils literal">with_test_db</tt> inside <tt class="docutils literal">conftest.py</tt>.</p>
+<p>With that out of the way, we can use <tt class="docutils literal"><span class="pre">pytest-xdist</span></tt> to run our tests in multiple processes!</p>
+<p>I made some comparisons over three projects which were built on this stack, and the results are as follows:</p>
+<div class="section" id="project-1-139-tests">
+<h3>Project 1 - 139 tests</h3>
+<p>Average in serial: ~15 seconds</p>
+<p>Average with 4 workers: ~4.5 seconds</p>
+</div>
+<div class="section" id="project-2-199-tests">
+<h3>Project 2 - 199 tests</h3>
+<p>Average in serial: ~20 seconds</p>
+<p>Average with 4 workers: ~7 seconds</p>
+</div>
+<div class="section" id="project-3-316-tests">
+<h3>Project 3 - 316 tests</h3>
+<p>Average in serial: ~53 seconds</p>
+<p>Average with 4 workers: ~15.5 seconds</p>
+<p>As can be seen above, each suite now takes about 1/3rd as long to run as it used to. I consider this a significant improvement!</p>
+</div>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

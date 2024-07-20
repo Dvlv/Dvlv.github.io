@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Switching from JetBrains IDEs to Vim</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/switching-from-jetbrains-ides-to-vim.html" rel="bookmark"
+           title="Permalink to Switching from JetBrains IDEs to Vim">Switching from JetBrains IDEs to Vim</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>The JetBrains IDEs are the industry standard when it comes to writing code - and for very good reason. It's hard to deny that they're probably
+the best IDEs out there. An easy excuse to not try them out was their lack of semantic highlighting, but they eventually added that in 2017, so
+I had to give them a go. Of course, I was very impressed, and I continued to use them for a year or so (&quot;them&quot; being PHPStorm and PyCharm).</p>
+<p>So, if I like them, why would I switch to something else? Firstly, I became annoyed by their ridiculous start-up time. Not only does it take a minute
+or so to go from launching the application to being able to open a project, it then takes <em>even longer</em> for the indexer to run and the IDE to
+become fully functional.</p>
+<p>As well as this, there's obviously the licensing. I prefer to use free software wherever possible. While there is a &quot;Community Version&quot; of
+PyCharm, there is not an equivalent for ALL of their products. Not only this, but the community version of PyCharm is missing crucial parts of
+web development such as HTML and Sass colouring or Jinja support.</p>
+<p>I've been using the IDEAVim plugin in all editors for a good while now, so I figured I'd dive all the way in and see if I can make Vim a proper
+replacement for PyCharm and PHPStorm. In this post I'll go over the plugins I use to get IDE-esque features out of plain Vim.</p>
+<div class="section" id="semantichighlight">
+<h2>SemanticHighlight</h2>
+<p>There is no question - any editor I use <em>HAS</em> to have semantic highlighting. Since discovering it in KDevelop, and initially trying to turn it
+off, I now cannot live without it. Anyone reading this who hasn't experienced programming with semantic highlighting, I urge you to give it a try
+if your editor-of-choice supports it.</p>
+<p>Luckily, there's a plugin for Vim which does it... quite well. It's not perfect, and despite having around 30 available colours, I still end up with
+a lot of repeats within the same function / class.</p>
+<p>Editing normal text in Vim becomes interesting when using a semantic highlighting plugin. To alleviate this, I <em>could</em> only enable it in my language
+configuration files, but I decided I'd rather torture myself and have it on an exclude basis rather than include.</p>
+<div class="section" id="relevant-vimrc">
+<h3>Relevant vimrc</h3>
+<div class="highlight"><pre><span></span>cnoreabbrev sem SemanticHighlight
+cnoreabbrev semr SemanticHighlightRevert
+
+
+<span class="k">let</span> <span class="k">g</span>:semanticTermColors <span class="p">=</span> [<span class="m">1</span><span class="p">,</span> <span class="m">3</span><span class="p">,</span> <span class="m">5</span><span class="p">,</span> <span class="m">6</span><span class="p">,</span> <span class="m">17</span><span class="p">,</span> <span class="m">30</span><span class="p">,</span> <span class="m">34</span><span class="p">,</span> <span class="m">54</span><span class="p">,</span> <span class="m">64</span><span class="p">,</span> <span class="m">88</span><span class="p">,</span> <span class="m">91</span><span class="p">,</span> <span class="m">98</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">107</span><span class="p">,</span> <span class="m">125</span><span class="p">,</span> <span class="m">129</span><span class="p">,</span> <span class="m">136</span><span class="p">,</span> <span class="m">142</span><span class="p">,</span> <span class="m">145</span><span class="p">,</span> <span class="m">148</span><span class="p">,</span> <span class="m">166</span><span class="p">,</span> <span class="m">170</span><span class="p">,</span> <span class="m">181</span><span class="p">,</span> <span class="m">202</span><span class="p">,</span> <span class="m">205</span>]
+<span class="k">let</span> <span class="k">g</span>:semanticGUIColors <span class="p">=</span> [<span class="s2">&quot;#800000&quot;</span><span class="p">,</span> <span class="s2">&quot;#808000&quot;</span><span class="p">,</span> <span class="s2">&quot;#800080&quot;</span><span class="p">,</span><span class="s2">&quot;#008080&quot;</span><span class="p">,</span> <span class="s2">&quot;#00005f&quot;</span><span class="p">,</span> <span class="s2">&quot;#008787&quot;</span><span class="p">,</span> <span class="s2">&quot;#00af00&quot;</span><span class="p">,</span> <span class="s2">&quot;#5f0087&quot;</span><span class="p">,</span> <span class="s2">&quot;#5f8700&quot;</span><span class="p">,</span> <span class="s2">&quot;#870000&quot;</span><span class="p">,</span> <span class="s2">&quot;#8700af&quot;</span><span class="p">,</span>
+            \ <span class="s2">&quot;#875fd7&quot;</span><span class="p">,</span> <span class="s2">&quot;#878700&quot;</span><span class="p">,</span> <span class="s2">&quot;#87af5f&quot;</span><span class="p">,</span> <span class="s2">&quot;#af005f&quot;</span><span class="p">,</span> <span class="s2">&quot;#af00ff&quot;</span><span class="p">,</span> <span class="s2">&quot;#af8700&quot;</span><span class="p">,</span> <span class="s2">&quot;#afaf00&quot;</span><span class="p">,</span> <span class="s2">&quot;#afafaf&quot;</span><span class="p">,</span> <span class="s2">&quot;#afd700&quot;</span><span class="p">,</span> <span class="s2">&quot;#d75f00&quot;</span><span class="p">,</span> <span class="s2">&quot;#d75fd7&quot;</span><span class="p">,</span>
+                        \ <span class="s2">&quot;#d7afaf&quot;</span><span class="p">,</span> <span class="s2">&quot;#ff5f00&quot;</span><span class="p">,</span> <span class="s2">&quot;#ff5faf&quot;</span><span class="p">,</span> <span class="s2">&quot;#ff6600&quot;</span><span class="p">,</span> <span class="s2">&quot;#705598&quot;</span><span class="p">,</span> <span class="s2">&quot;#6da741&quot;</span>]
+
+autocmd<span class="p">!</span> bufwritepost .vimrc source %
+autocmd <span class="nb">VimEnter</span> *.md<span class="p">,</span>*.rst<span class="p">,</span>*.txt<span class="p">,</span>*.html<span class="p">,</span>*.jinja <span class="k">let</span> <span class="k">b</span>:dontsem<span class="p">=</span><span class="m">1</span>
+
+<span class="k">fun</span><span class="p">!</span> MaybeSem<span class="p">()</span>
+    <span class="k">if</span> exists<span class="p">(</span><span class="s1">&#39;b:dontsem&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">endif</span>
+    <span class="k">if</span> &amp;<span class="nb">ft</span> <span class="p">=~</span> <span class="s1">&#39;markdown\|html\|text&#39;</span>
+        <span class="k">return</span>
+    <span class="k">endif</span>
+    SemanticHighlight
+<span class="k">endfun</span>
+
+autocmd <span class="nb">VimEnter</span> * <span class="k">call</span> MaybeSem<span class="p">()</span>
+autocmd <span class="nb">InsertLeave</span> * <span class="k">call</span> MaybeSem<span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ctrl-p">
+<h2>Ctrl-P</h2>
+<p>KDevelop's Quick Open feature is amazing, and JetBrains IDEs offer something similar which I don't know the name of off-hand. Pressing a
+shortcut (Ctrl-Q in my case) presents a list of files in the project, and they can be fuzzy-filtered and opened without taking hands off
+of the keyboard. Ctrl-P Vim offers this.</p>
+<p>There is a tradeoff here though, instead of waiting 5 minutes for PyCharm to index on startup, Ctrl-P will index when you first invoke it, meaning
+if you do not open the file you want initially, you may have to wait ~30 seconds to search for it.</p>
+<p>Also, it comes with a default limit of files to index, which I didn't realise until I got put on a Laravel Project created by someone with no
+respect for harddrive space, and wondered why I couldn't quick open a file which I knew existed.</p>
+<div class="section" id="id1">
+<h3>Relevant vimrc</h3>
+<div class="highlight"><pre><span></span><span class="k">let</span> <span class="k">g</span>:ctrlp_map <span class="p">=</span> <span class="s1">&#39;&lt;C-q&gt;&#39;</span>
+<span class="k">let</span> <span class="k">g</span>:ctrlp_path_nolim<span class="p">=</span><span class="m">1</span>
+<span class="k">let</span> <span class="k">g</span>:ctrlp_path_sort<span class="p">=</span><span class="m">1</span>
+<span class="k">let</span> <span class="k">g</span>:ctrlp_max_files<span class="p">=</span><span class="m">0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ack">
+<h2>Ack</h2>
+<p>I've mentioned ack in <a class="reference external" href="https://www.dvlv.co.uk/how-to-get-flask-to-auto-restart-despite-syntax-errors.html">a previous post about Flask.</a> Ack is somewhat like an alternative to grep. This allows me to do a &quot;Find All&quot; throughout a
+project in vim.</p>
+<p><a class="reference external" href="https://github.com/Dvlv/dotfiles/blob/master/ackrc">My .ackrc can be found here.</a></p>
+<div class="section" id="id2">
+<h3>Relevant vimrc</h3>
+<div class="highlight"><pre><span></span>map <span class="p">&lt;</span>C<span class="p">-</span><span class="k">f</span><span class="p">&gt;</span> :LAck<span class="p">!</span> <span class="p">-</span>Q <span class="s2">&quot;&quot;</span><span class="p">&lt;</span><span class="k">left</span><span class="p">&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ale">
+<h2>ALE</h2>
+<p>ALE is the asynchronous linting engine for vim. I only have this enabled for python projects, and it's great at spotting silly mistakes before I
+bother trying to run the code.</p>
+<p>On top of that, one of our projects requires running <a class="reference external" href="https://github.com/psf/black">black</a> over the code before checking it in. ALE can be
+used to run black quietly on every save and overwrite the file while it is open. Pretty neat.</p>
+<div class="section" id="id3">
+<h3>Relevant vimrc</h3>
+<p>TODO: check if work laptop vimrc has different stuff</p>
+<div class="highlight"><pre><span></span><span class="k">let</span> <span class="k">g</span>:ale_lint_on_insert_leave<span class="p">=</span><span class="m">1</span>
+<span class="k">let</span> <span class="k">g</span>:ale_fixers <span class="p">=</span> [<span class="s2">&quot;black&quot;</span>]
+<span class="k">let</span> <span class="k">g</span>:ale_fix_on_save<span class="p">=</span><span class="m">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="airline">
+<h2>Airline</h2>
+<p>Not a critical part of my setup, but it nicely integrates with ALE to show existing errors and shows &quot;tabs&quot; of which files I have open.</p>
+<div class="section" id="id4">
+<h3>Relevant vimrc</h3>
+<div class="highlight"><pre><span></span><span class="k">let</span> <span class="k">g</span>:airline#extensions#ale#enabled <span class="p">=</span> <span class="m">1</span>
+<span class="k">let</span> <span class="k">g</span>:airline#extensions#<span class="nb">tabline</span>#enabled <span class="p">=</span> <span class="m">1</span>
+<span class="k">let</span> <span class="k">g</span>:airline_theme<span class="p">=</span><span class="s1">&#39;papercolor&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="other-miscellaneous-vimrc-goodies">
+<h2>Other miscellaneous vimrc goodies</h2>
+<ul class="simple">
+<li><tt class="docutils literal">set showmatch</tt> - Shows matching brackets.</li>
+<li><tt class="docutils literal">set smartcase</tt> - When searching, will be case insensitive unless you type a capital.</li>
+<li><tt class="docutils literal">map <span class="pre">&lt;C-b&gt;</span> :buffers&lt;CR&gt;</tt> - Pressing Control + b shows which files I have open.</li>
+<li><tt class="docutils literal">set <span class="pre">listchars=tab:&gt;.,trail:.,extends:#,nbsp:.</span></tt> - combine this with <tt class="docutils literal">set list</tt> to show visible whitespace.</li>
+<li><tt class="docutils literal">set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab</tt> - Tab key inserts 4 spaces.</li>
+<li><tt class="docutils literal">set relativenumber</tt> - Relative line numbers, makes doing <tt class="docutils literal">4j</tt> and such easier.</li>
+<li><tt class="docutils literal">set hidden</tt> - Allows you to switch buffer without saving first.</li>
+</ul>
+</div>
+<div class="section" id="my-vimrc">
+<h2>My vimrc</h2>
+<p>You can grab my vimrc <a class="reference external" href="https://github.com/Dvlv/dotfiles/blob/master/vimrc">from Github here</a> if you so desire, though most of it is available here.</p>
+<p>I use <a class="reference external" href="https://github.com/tpope/vim-pathogen">pathogen</a> to manage plugins.</p>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>

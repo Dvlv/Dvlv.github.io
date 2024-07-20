@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <title>Watching files for changes in python with Watchdog</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+        <!--[if IE]>
+            <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <script src="/theme/js/dvlv.js"></script>
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">Dvlv's Blog </a></h1>
+                <div id="menu-button" onclick="showPages();">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+                <nav id="pages"><ul>
+                    <li><a href="/pages/contact-me.html">Contact</a></li>
+                    <li><a href="/blog.html">Blog</a></li>
+                    <li><a href="/pages/tkinter-by-example.html">Tkinter By Example</a></li>
+                    <li><a href="/pages/the-tkinter-cookbook.html">Tkinter Cookbook</a></li>
+                    <li><a href="/pages/tkinter-gui-programming-by-example.html">Tkinter GUI Programming</a></li>
+                    <li><a href="/pages/learn-flask-by-example.html">Flask By Example</a></li>
+                    <li><a href="/pages/a-beginners-guide-to-fedora-silverblue.html">Silverblue Beginner's Guide</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/watching-files-for-changes-in-python-with-watchdog.html" rel="bookmark"
+           title="Permalink to Watching files for changes in python with Watchdog">Watching files for changes in python with Watchdog</a></h1>
+    </header>
+
+    <div class="entry-content">
+      <p>As a web developer, I like to use less and typescript to make css / javascript a little nicer to work with. Even nicer still is to have a process
+watch these files for changes, then automatically compile them on save, to make development as streamlined as if you were using css or javascript itself.</p>
+<p>However, I prefer to stay as far away from the world of <tt class="docutils literal">npm</tt> as possible.</p>
+<p>The standard way of watching and compiling both of these things is by downloading packages with <tt class="docutils literal">npm</tt> and running some kind of <tt class="docutils literal">npm run watch</tt> command.</p>
+<p>However, since my web projects are all using python for both the front and back end, I'd prefer to leverage that for as much of the development
+process as I can.</p>
+<div class="section" id="enter-watchdog">
+<h2>Enter Watchdog</h2>
+<p>Watchdog is a python library which lets you watch over a directory and react to changes in the files. I'm sure it does more than that, but this
+is the only feature I use.</p>
+<p>Watchdog has a nice feature called &quot;tricks&quot; which has us create a <tt class="docutils literal">tricks.yaml</tt> file as well as a <tt class="docutils literal">Trick</tt> class to make the setup fairly painless.</p>
+</div>
+<div class="section" id="my-tricks-yaml">
+<h2>My Tricks.yaml</h2>
+<div class="highlight"><pre><span></span><span class="n">tricks</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">helpers</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">LessCompileTrick</span><span class="p">:</span>
+    <span class="n">src_dir</span><span class="p">:</span> <span class="s1">&#39;web/admin/static/less&#39;</span>
+    <span class="n">dest_dir</span><span class="p">:</span> <span class="s1">&#39;web/admin/static/css&#39;</span>
+    <span class="n">patterns</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;*.less&#39;</span><span class="p">]</span>
+
+<span class="o">-</span> <span class="n">helpers</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">watcher</span><span class="o">.</span><span class="n">TsCompileTrick</span><span class="p">:</span>
+    <span class="n">src_dir</span><span class="p">:</span> <span class="s1">&#39;web/admin/static/ts&#39;</span>
+    <span class="n">dest_dir</span><span class="p">:</span> <span class="s1">&#39;web/admin/static/js&#39;</span>
+    <span class="n">patterns</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;*.ts&#39;</span><span class="p">]</span>
+</pre></div>
+<p>This file defines a trick per compilation. Both tricks specify the source and destination directories of the languages, and the file types to watch.</p>
+</div>
+<div class="section" id="my-tricks-classes">
+<h2>My tricks classes</h2>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">watchdog.tricks</span> <span class="kn">import</span> <span class="n">Trick</span>
+
+
+<span class="k">class</span> <span class="nc">LessCompileTrick</span><span class="p">(</span><span class="n">Trick</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_dir</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_dir</span> <span class="o">=</span> <span class="n">src_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span> <span class="o">=</span> <span class="n">dest_dir</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compiles less into css</span>
+
+<span class="sd">        :return: ``None``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;lesscpy -r &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_dir</span> <span class="o">+</span> <span class="s2">&quot; -o&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TsCompileTrick</span><span class="p">(</span><span class="n">Trick</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_dir</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">src_dir</span> <span class="o">=</span> <span class="n">src_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span> <span class="o">=</span> <span class="n">dest_dir</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_modified</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compiles ts into js</span>
+
+<span class="sd">        :return: ``None``</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;tsc --inlineSourceMap&quot;</span><span class="p">)</span>
+</pre></div>
+<p>As indicated by the <tt class="docutils literal">tricks.yaml</tt> file, this code lives at <tt class="docutils literal">helpers/watcher/watcher.py</tt> and defines two subclasses of the provided <tt class="docutils literal">Trick</tt> class.</p>
+<p>Both define a special <tt class="docutils literal">on_modified</tt> method, which is called when a file is changed. In this simpler example, both classes then just call a single
+other method called &quot;compile&quot; which uses <tt class="docutils literal">os.system</tt> to call a shell command to compile the entire watched directory.</p>
+<p>For more complex requirements, the <tt class="docutils literal">event</tt> parameter available to <tt class="docutils literal">on_modified</tt> contains details about the exact file changed, but luckily
+for me both the less and typescript compilers can run over a whole directory.</p>
+</div>
+<div class="section" id="running">
+<h2>Running</h2>
+<p>With these files in place, when working on a project I can open a terminal tab, <tt class="docutils literal">cd</tt> to the project's root directory and run <tt class="docutils literal">watchmedo tricks tricks.yaml</tt>
+to have python code watch for changes to either <tt class="docutils literal">.less</tt> files or <tt class="docutils literal">.ts</tt> files, and it will automatically compile them for me.</p>
+</div>
+
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>Useful Links</h2>
+                        <ul>
+                        <li><a target="_blank" href="https://github.com/Dvlv"  >Github</a></li>
+                        <li><a target="_blank" href="/pages/js-licence.html" data-jslicense="1" >Javascript Licence</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body"></footer><!-- /#contentinfo -->
+
+</body>
+</html>
